@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="_layout :: html(~{::title}, ~{::style}, ~{::section})">
+<head>
+    <title>Kết quả xác thực</title>
+    <style></style>
+</head>
+<body>
+<section>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div th:if="${ok}" class="alert alert-success shadow-sm">
+                Xác thực thành công cho email <b th:text="${email}">you@example.com</b>.
+                Bạn có thể <a href="/login">đăng nhập</a> ngay bây giờ.
+            </div>
+            <div th:if="${!ok}" class="alert alert-danger shadow-sm">
+                Xác thực thất bại: <span th:text="${message}">Token không hợp lệ</span>.
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

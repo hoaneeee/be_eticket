@@ -1,0 +1,40 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi"
+      th:replace="_layout :: html(~{::title}, ~{}, ~{::section})">
+<head>
+    <title>Refund updates</title>
+</head>
+
+<section>
+    <div class="container py-3">
+        <h3 class="mb-3">Cập nhật hoàn tiền gần đây</h3>
+        <ul id="updates" class="list-group"></ul>
+    </div>
+
+    <script>
+        (async function(){
+            const ul = document.getElementById('updates');
+            try{
+                const r = await fetch('/web/me/refunds/recent-updates', { credentials: 'include', cache:'no-store' });
+                const list = await r.json();
+                if (!Array.isArray(list) || list.length===0) {
+                    ul.innerHTML = '<li class="list-group-item text-secondary">Chưa có cập nhật.</li>';
+                    return;
+                }
+                ul.innerHTML = list.map(x => `
+          <li class="list-group-item d-flex justify-content-between">
+            <span>
+              Refund #${x.id} • Order #${x.orderId}
+              • <b>${x.status}</b>
+              • ${Number(x.amount||0).toLocaleString('vi-VN')}₫
+            </span>
+            <small class="text-secondary">${new Date(x.updatedAt).toLocaleString()}</small>
+          </li>
+        `).join('');
+            }catch(e){
+                ul.innerHTML = '<li class="list-group-item text-danger">Không tải được dữ liệu.</li>';
+            }
+        })();
+    </script>
+</section>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="_layout :: html(~{::title}, ~{::style}, ~{::section})">
+<head>
+    <title>Kiểm tra email</title>
+    <style></style>
+</head>
+<body>
+<section>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="alert alert-info shadow-sm">
+                Chúng tôi đã gửi một email xác thực đến <b th:text="${email}">you@example.com</b>.
+                Vui lòng kiểm tra hộp thư và làm theo hướng dẫn.
+            </div>
+
+            <form class="d-flex gap-2" th:action="@{/resend}" method="post">
+                <input type="email" class="form-control" name="email" placeholder="Nhập lại email" th:value="${email}">
+                <button class="btn btn-secondary">Gửi lại</button>
+            </form>
+        </div>
+    </div>
+</section>
+</body>
+</html>

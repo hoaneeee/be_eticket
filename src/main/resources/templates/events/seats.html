@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{_layout :: html(~{::title}, ~{::style}, ~{::section})}">
+<head>
+    <title th:text="${e.title} + ' – Chọn chỗ'">Chọn chỗ</title>
+    <style>
+        .seat-wrap{display:grid;grid-template-columns: 1fr 360px; gap:24px}
+        .board{background:#fff;border-radius:16px;box-shadow:0 12px 36px rgba(16,24,40,.08);padding:16px}
+        .sidebar{background:#fff;border-radius:16px;box-shadow:0 12px 36px rgba(16,24,40,.08);padding:16px;position:sticky;top:24px;height:fit-content}
+        .legend .dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+        .dot-free{background:#22c55e}.dot-hold{background:#f59e0b}.dot-sold{background:#ef4444}.dot-me{background:#3b82f6}
+
+        /* chỉ ghế bắt sự kiện */
+        #svgHost svg * { pointer-events: none; }
+        #svgHost svg [data-seat] { pointer-events: auto; cursor:pointer; transition:filter .15s ease; }
+
+        #svgHost svg [data-state="free"]  { fill:#22c55e; }
+        #svgHost svg [data-state="hold"]  { fill:#f59e0b; }
+        #svgHost svg [data-state="sold"]  { fill:#ef4444; pointer-events:none; }
+        #svgHost svg [data-state="me"]    { fill:#3b82f6; }
+        #svgHost svg [data-seat]:hover    { filter:brightness(0.9); }
+    </style>
+</head>
+<body>
+<section class="container">
+    <div class="mb-3">
+        <a href="/" class="btn btn-link">← Về trang chủ</a>
+    </div>
+
+    <div class="seat-wrap">
+        <div class="board">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="fw-bold m-0" th:text="${e.title}">Tên sự kiện</h5>
+                <div class="legend small">
+                    <span class="dot dot-free"></span> Còn
+                    <span class="dot dot-hold ms-3"></span> Đang giữ
+                    <span class="dot dot-me ms-3"></span> Bạn giữ
+                    <span class="dot dot-sold ms-3"></span> Đã bán
+                </div>
+            </div>
+            <div id="svgHost" th:utext="${svg}"><!-- inline SVG --></div>
+        </div>
+
+        <div class="sidebar">
+            <h6 class="fw-bold mb-3">Ghế đã chọn</h6>
+            <div id="chosenList" class="vstack gap-2"></div>
+            <hr>
+            <div class="d-flex justify-content-between">
+                <span>Tạm tính</span>
+                <b id="sum">0</b>
+            </div>
+            <a href="/cart" class="btn btn-primary w-100 mt-3">Tiếp tục thanh toán</a>
+            <div class="text-secondary small mt-2">Bạn vẫn có thể điều chỉnh trong giỏ hàng.</div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const EVENT_ID = /*[[${e.id}]]*/ 0;
+        const ZONE_CAP = /*[[${zoneCapMap}]]*/ {};
+        const SOLD_KEYS = /*[[${soldKeys}]]*/ [];
+        const SOLD_SET = new Set(SOLD_KEYS);
+
+        const picked = new Map();
+        let sum = 0;
+        const vnd = n => new Intl.NumberFormat('vi-VN').format(n) + ' ₫';
+
+        function updateSidebar(){
+            const box = document.getElementById('chosenList');
+            const sumEl = document.getElementById('sum');
+            box.innerHTML = ''; sum = 0;
+            picked.forEach(item=>{
+                sum += item.price;
+                const row = document.createElement('div');
+                row.className='d-flex justify-content-between align-items-center border rounded-3 px-2 py-1';
+                row.innerHTML=`<div>${item.display}</div>
+                     <button class="btn btn-sm btn-outline-danger">x</button>`;
+                row.querySelector('button').onclick=()=>releaseSeat(item.zoneId, item.seatNo);
+                box.appendChild(row);
+            });
+            sumEl.textContent = vnd(sum);
+        }
+
+        async function holdSeat(zoneId, seatNo){
+            try {
+                const r = await fetch('/api/public/v1/cart/hold-seat',{
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({eventId:EVENT_ID,zoneId,seatNo})
+                });
+                if (!r.ok) return false;
+                const data = await r.json().catch(()=> ({}));
+                return !!data.ok;
+            } catch { return false; }
+        }
+        async function releaseSeat(zoneId, seatNo){
+            try {
+                const r = await fetch('/api/public/v1/cart/release-seat',{
+                    method:'POST', headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({eventId:EVENT_ID,zoneId,seatNo})
+                });
+                const data = await r.json().catch(()=> ({}));
+                if (data && data.ok){
+                    const el=document.querySelector(`[data-zone="${zoneId}"][data-seat="${seatNo}"]`);
+                    if (el) setSeatColor(el, 'free');
+                    picked.delete(`${zoneId}-${seatNo}`);
+                    updateSidebar();
+                }
+            } catch {}
+        }
+
+        function generateSeatsFromZones(){
+            const svg = document.querySelector('#svgHost svg');
+            if (!svg) return;
+            const zones = svg.querySelectorAll('g.zone');
+
+            zones.forEach(g => {
+                const rect = g.querySelector('rect'); if (!rect) return;
+                const zoneId   = parseInt(g.dataset.zoneId);
+                const zoneName = g.dataset.zoneName || zoneId;
+                const price    = parseInt(g.dataset.price || '0');
+                const rows     = parseInt(g.dataset.rows || '0');
+                const cols     = parseInt(g.dataset.cols || '0');
+                if (!rows || !cols) return;
+
+                const x = +rect.getAttribute('x'), y = +rect.getAttribute('y');
+                const w = +rect.getAttribute('width'), h = +rect.getAttribute('height');
+
+                const padX  = Math.max(6, w * 0.06);
+                const padY  = Math.max(6, h * 0.16);
+                const gridW = w - padX * 2, gridH = h - padY * 2;
+                const cellW = gridW / cols, cellH = gridH / rows;
+                const r     = Math.max(4, Math.min(cellW, cellH) * 0.3);
+
+                const capFromDb = Number.isFinite(ZONE_CAP[zoneId]) ? parseInt(ZONE_CAP[zoneId]) : 0;
+                const cap = Math.min((capFromDb && capFromDb > 0) ? capFromDb : (rows * cols), rows * cols);
+
+                let seatNo = 1;
+                outer:
+                    for (let ri=0; ri<rows; ri++){
+                        for (let ci=0; ci<cols; ci++){
+                            if (seatNo > cap) break outer;
+                            const cx = x + padX + ci * cellW + cellW/2;
+                            const cy = y + padY + ri * cellH + cellH/2;
+
+                            const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+                            c.setAttribute('cx', cx.toFixed(1));
+                            c.setAttribute('cy', cy.toFixed(1));
+                            c.setAttribute('r',  r.toFixed(1));
+                            c.dataset.seat = seatNo; c.dataset.zone = zoneId;
+                            c.dataset.zoneName = zoneName; c.dataset.price = price;
+                            c.dataset.state = 'free';
+                            g.appendChild(c);
+                            seatNo++;
+                        }
+                    }
+            });
+        }
+
+        function markSoldSeats(){
+            document.querySelectorAll('#svgHost svg [data-seat]').forEach(el=>{
+                const key = `${+el.dataset.zone}:${+el.dataset.seat}`;
+                if (SOLD_SET.has(key)) el.setAttribute('data-state','sold');
+            });
+        }
+
+        function setSeatColor(el, st){
+            el.setAttribute('data-state', st);
+            if (st==='me') el.style.fill='#3b82f6';
+            else if (st==='hold') el.style.fill='#f59e0b';
+            else if (st==='sold') el.style.fill='#ef4444';
+            else el.style.fill='#22c55e';
+        }
+
+        function bindSvg(){
+            document.querySelectorAll('#svgHost svg [data-seat]').forEach(el=>{
+                el.addEventListener('click', async ()=>{
+                    const seatNo = +el.dataset.seat, zoneId = +el.dataset.zone;
+                    const price  = +el.dataset.price || 0;
+                    const display= `Zone ${el.dataset.zoneName} – Ghế ${seatNo}`;
+                    const k = `${zoneId}-${seatNo}`;
+                    const st = el.getAttribute('data-state') || 'free';
+                    if (st==='sold' || st==='hold') return;
+
+                    if (picked.has(k)) {
+                        await releaseSeat(zoneId, seatNo);
+                    } else {
+                        const ok = await holdSeat(zoneId, seatNo);
+                        if (ok){
+                            picked.set(k, {zoneId, seatNo, price, display});
+                            setSeatColor(el, 'me');
+                            updateSidebar();
+                        }
+                    }
+                });
+            });
+        }
+
+        // ===== Realtime holds / sold =====
+        const HOLDS = new Map(); // key `${z}:${s}` -> {mine:boolean}
+
+        async function refreshHolds(){
+            try{
+                const r = await fetch(`/api/public/v1/cart/holds?eventId=${EVENT_ID}`);
+                if(!r.ok) return;
+                const data = await r.json();
+                HOLDS.clear();
+                for(const h of (data.holds||[])){
+                    HOLDS.set(`${h.zoneId}:${h.seatNo}`, {mine: !!h.mine});
+                }
+                applyHoldsToSvg();
+            }catch(_){}
+        }
+
+        // OPTIONAL: nếu đã thêm API sold-keys
+        async function refreshSold(){
+            try{
+                const r = await fetch(`/api/public/v1/seats/sold-keys?eventId=${EVENT_ID}`);
+                if(!r.ok) return;
+                const keys = await r.json();
+                SOLD_SET.clear();
+                keys.forEach(k => SOLD_SET.add(k));
+                applyHoldsToSvg();
+            }catch(_){}
+        }
+
+        function applyHoldsToSvg(){
+            document.querySelectorAll('#svgHost svg [data-seat]').forEach(el=>{
+                const z = +el.dataset.zone, s = +el.dataset.seat;
+                const keyPair = `${z}-${s}`;
+                const key = `${z}:${s}`;
+
+                // đã bán -> đỏ & gỡ khỏi picked
+                if (SOLD_SET.has(key)) {
+                    el.dataset.state = 'sold';
+                    if (picked.has(keyPair)) {
+                        picked.delete(keyPair);
+                        updateSidebar();
+                    }
+                    return;
+                }
+
+                const h = HOLDS.get(key);
+                if (!h){
+                    // không ai giữ -> chỉ trả về free nếu không phải bạn đang giữ (me)
+                    if (el.dataset.state !== 'me') el.dataset.state = 'free';
+                } else {
+                    // người khác giữ -> vàng, đồng thời gỡ khỏi picked nếu bạn lỡ đang để
+                    if (!h.mine && picked.has(keyPair)) {
+                        picked.delete(keyPair);
+                        updateSidebar();
+                    }
+                    el.dataset.state = h.mine ? 'me' : 'hold';
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', ()=>{
+            generateSeatsFromZones();
+            markSoldSeats();
+            bindSvg();
+            refreshHolds();
+            setInterval(refreshHolds, 2000);
+            refreshSold();
+            setInterval(refreshSold, 5000);
+        });
+    </script>
+</section>
+</body>
+</html>

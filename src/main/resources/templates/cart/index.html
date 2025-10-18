@@ -1,0 +1,476 @@
+<!--
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{_layout :: html(~{::title}, ~{::style}, ~{::section})}">
+<head>
+    <title>Cart</title>
+    <style>
+        .cart-card{ border-radius:16px; box-shadow:0 10px 30px rgba(16,24,40,.08); border:0 }
+        .price{ font-weight:800 }
+        .empty{ border-radius:14px; border:1px dashed #d0d5dd; background:#fafafa }
+    </style>
+</head>
+<body>
+<section class="container">
+    <h3 class="fw-bold mb-3">Giỏ hàng</h3>
+
+    &lt;!&ndash; Empty &ndash;&gt;
+    <div class="empty p-5 text-center" th:if="${cart.lines.isEmpty()}">
+        Giỏ hàng đang trống. <a href="/">Tiếp tục xem sự kiện</a>.
+    </div>
+
+    &lt;!&ndash; List &ndash;&gt;
+    <div class="card cart-card" th:if="${!cart.lines.isEmpty()}">
+        <div class="table-responsive">
+            <table class="table align-middle m-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Sự kiện</th>
+                    <th>Loại vé</th>
+                    <th class="text-center" style="width:140px">Số lượng</th>
+                    <th class="text-end" style="width:160px">Đơn giá</th>
+                    <th class="text-end" style="width:160px">Thành tiền</th>
+                    <th style="width:60px"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="l : ${cart.lines}">
+                    <td th:text="${l.eventTitle}">Concert A</td>
+                    <td>
+                        <div class="fw-semibold" th:text="${l.ticketTypeName}">Vé thường</div>
+
+                        <div class="small text-muted" th:if="${l.holdId != null}">
+                            Giữ chỗ #<span th:text="${l.holdId}">0</span> • Hết hạn sau:
+                            <span class="countdown"
+                                  th:attr="data-hold-id=${l.holdId},data-exp=${l.holdExpiresAt}">&#45;&#45;:&#45;&#45;</span>
+                            <button type="button" class="btn btn-link btn-sm p-0 ms-1 renew-one"
+                                    th:attr="data-hold-id=${l.holdId}">
+                                Gia hạn
+                            </button>
+                        </div>
+                    </td>
+                    <td class="text-center" th:text="${l.qty}">1</td>
+                    <td class="text-end">
+                        <span class="price" th:text="${#numbers.formatInteger(l.unitPrice,0)}"></span> đ
+                    </td>
+                    <td class="text-end">
+                        <span class="price" th:text="${#numbers.formatInteger(l.lineTotal(),0)}"></span> đ
+                    </td>
+                    <td class="text-end">
+                        <form method="post" th:action="@{/cart/remove}">
+                            <input type="hidden" name="ticketTypeId" th:value="${l.ticketTypeId}">
+                            <button class="btn btn-sm btn-outline-danger">Xoá</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        &lt;!&ndash; Hành động + nút Checkout &ndash;&gt;
+        <div class="p-3 d-flex justify-content-between align-items-center">
+            <form method="post" th:action="@{/cart/clear}">
+                <button class="btn btn-outline-secondary">Xoá toàn bộ</button>
+            </form>
+        </div>
+
+        &lt;!&ndash; PANEL TỔNG TIỀN + COUPON &ndash;&gt;
+        <div class="p-3 pt-0">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3">Tạm tính</h5>
+
+                    <div class="input-group mb-2">
+                        <input id="couponInput" class="form-control" placeholder="Nhập mã giảm giá">
+                        <button class="btn btn-outline-primary" type="button" onclick="applyCoupon()">Áp dụng</button>
+                        <button class="btn btn-outline-secondary" type="button" onclick="clearCoupon()">Xoá</button>
+                    </div>
+                    <div id="couponMsg" class="small text-secondary mb-2"></div>
+
+                    <div id="ruleBadges" class="mb-2"></div>
+
+                    <div class="d-flex justify-content-between">
+                        <span>Tổng hàng</span>
+                        <b id="pp-subtotal">0 ₫</b>
+                    </div>
+                    <div class="d-flex justify-content-between text-success">
+                        <span>Giảm theo chương trình</span>
+                        <b id="pp-rules">-0 ₫</b>
+                    </div>
+                    <div class="d-flex justify-content-between text-success">
+                        <span>Giảm mã</span>
+                        <b id="pp-coupon">-0 ₫</b>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fs-5">
+                        <span>Thành tiền</span>
+                        <b id="pp-total">0 ₫</b>
+                    </div>
+                </div>
+            </div>
+        </div>
+        &lt;!&ndash; /PANEL &ndash;&gt;
+    </div>
+
+    <div class="mt-3 d-flex justify-content-between" th:if="${!cart.lines.isEmpty()}">
+        <a href="/" class="btn btn-link"><i class="bi bi-arrow-left"></i> Tiếp tục xem sự kiện</a>
+        <th:block th:if="${order.status != null and order.status.name() != 'PAID'}">
+            <a th:href="@{/payment/momo/pay(orderCode=${order.code})}"
+               class="btn btn-primary ms-2">
+                Thanh toán MoMo
+            </a>
+        </th:block>
+    </div>
+    <script>
+        // ====== Cấu hình ======
+        const RENEW_THRESHOLD_SEC = 0;      // =0 để tắt auto-renew (chỉ nút "Gia hạn")
+        const renewedOnce = new Set();      // đánh dấu đã auto-renew 1 lần/hold
+        const purgedOnce  = new Set();      // đánh dấu đã purge 1 lần/hold
+
+        // Format mm:ss
+        const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+
+        // Gỡ hàng khỏi UI + gọi BE dọn session (không reload trang)
+        let purgeInFlight = false;
+
+        async function purgeAndRemoveRow(el, holdId){
+            if (purgeInFlight) return;
+            purgeInFlight = true;
+            try { await fetch('/cart/purge-expired', { method:'POST' }); }
+            catch(_) {}
+            finally { purgeInFlight = false; }
+
+            const row = el.closest('tr');
+            if (row) row.remove();
+            window.dispatchEvent(new Event('cart:updated'));
+        }
+        // Gia hạn thủ công (nút “Gia hạn”) — 0 reload khi thất bại
+        async function renewHold(id){
+            try{
+                const r = await fetch(`/api/public/v1/inventory/holds/${id}/renew`, { method:'POST' });
+                if (!r.ok) {
+                    // Nếu quá lượt / hold không còn -> gỡ dòng ngay, tránh loop
+                    if ([409,400,404].includes(r.status)) {
+                        document.querySelectorAll(`.countdown[data-hold-id="${id}"]`)
+                            .forEach(el => purgeAndRemoveRow(el, id));
+                        renewedOnce.add(id); // chặn gọi lại
+                    }
+                    return false;
+                }
+                const dto = await r.json();
+                document.querySelectorAll(`.countdown[data-hold-id="${id}"]`)
+                    .forEach(el => el.dataset.exp = dto.expiresAt);
+                return true;
+            }catch(_){ return false; }
+        }
+
+        function tick(){
+            const now = Date.now();
+            document.querySelectorAll('.countdown').forEach(el=>{
+                const expMsRaw = el.dataset.exp || '';
+                const expMs = Date.parse(expMsRaw);
+                if (Number.isNaN(expMs)) { el.textContent='&#45;&#45;:&#45;&#45;'; return; }
+
+                const left = Math.max(0, Math.floor((expMs - now)/1000));
+                el.textContent = fmt(left);
+
+                const id = el.dataset.holdId;
+
+                if (left <= 10) el.classList.add('text-danger'); else el.classList.remove('text-danger');
+
+                if (RENEW_THRESHOLD_SEC > 0 &&
+                    document.visibilityState === 'visible' &&
+                    left > 0 && left <= RENEW_THRESHOLD_SEC && id && !renewedOnce.has(id)) {
+                    renewedOnce.add(id);
+                    renewHold(id);
+                }
+
+                if (left === 0 && id && !purgedOnce.has(id)) {
+                    purgedOnce.add(id);
+                    purgeAndRemoveRow(el, id);
+                }
+            });
+        }
+
+        document.addEventListener('click', (e)=>{
+            const btn = e.target.closest('.renew-one');
+            if (!btn) return;
+            renewHold(btn.dataset.holdId);
+        });
+
+        setInterval(tick, 1000);
+        document.addEventListener('DOMContentLoaded', tick);
+    </script>
+
+
+    <script>
+        function vnd(n){ return new Intl.NumberFormat('vi-VN').format(Number(n||0)) + ' ₫'; }
+
+        window.refreshPreview = async function(){
+            const code = document.getElementById('couponInput')?.value || '';
+            const res = await fetch('/api/public/v1/pricing/preview', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ couponCode: code })
+            }).then(r=>r.json()).catch(()=>null);
+            if(!res) return;
+
+            document.getElementById('pp-subtotal').textContent = vnd(res.subtotal);
+            document.getElementById('pp-rules').textContent    = '-' + vnd(res.discountRules);
+            document.getElementById('pp-coupon').textContent   = '-' + vnd(res.discountCoupon);
+            document.getElementById('pp-total').textContent    = vnd(res.total);
+
+            const msg = document.getElementById('couponMsg');
+            msg.textContent = res.couponValid ? 'Mã áp dụng thành công.' : (res.couponMessage || '');
+
+            const badges = document.getElementById('ruleBadges');
+            badges.innerHTML = (res.ruleBadges||[]).map(b=>{
+                const until = b.endsAt ? new Date(b.endsAt).toLocaleString('vi-VN') : '';
+                return `<span class="badge text-bg-info me-1">${b.label}</span>
+              <span class="small text-secondary me-2">${until?('đến '+until):''}</span>`;
+            }).join('');
+        }
+
+        window.applyCoupon = async function(){
+            const code = document.getElementById('couponInput')?.value || '';
+            const r = await fetch('/api/public/v1/coupons/apply', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ code })
+            }).then(x=>x.json()).catch(()=>null);
+            if(!r || !r.ok){ alert((r && r.message) || 'Không áp dụng được'); return; }
+            refreshPreview();
+        }
+
+        window.clearCoupon = async function(){
+            await fetch('/api/public/v1/coupons/clear', { method:'POST' }).catch(()=>{});
+            document.getElementById('couponInput').value = '';
+            refreshPreview();
+        }
+
+        document.addEventListener('DOMContentLoaded', refreshPreview);
+        window.addEventListener('cart:updated', refreshPreview);
+    </script>
+
+</section>
+
+
+
+</body>
+</html>
+-->
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{_layout :: html(~{::title}, ~{::style}, ~{::section})}">
+<head>
+    <title>Cart</title>
+    <style>
+        .cart-card{ border-radius:16px; box-shadow:0 10px 30px rgba(16,24,40,.08); border:0 }
+        .price{ font-weight:800 }
+        .empty{ border-radius:14px; border:1px dashed #d0d5dd; background:#fafafa }
+    </style>
+</head>
+<body>
+<section class="container">
+    <h3 class="fw-bold mb-3">Giỏ hàng</h3>
+
+    <!-- Empty -->
+    <div class="empty p-5 text-center" th:if="${cart.lines.isEmpty()}">
+        Giỏ hàng đang trống. <a href="/">Tiếp tục xem sự kiện</a>.
+    </div>
+
+    <!-- List -->
+    <div class="card cart-card" th:if="${!cart.lines.isEmpty()}">
+        <div class="table-responsive">
+            <table class="table align-middle m-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Sự kiện</th>
+                    <th>Loại vé</th>
+                    <th class="text-center" style="width:140px">Số lượng</th>
+                    <th class="text-end" style="width:160px">Đơn giá</th>
+                    <th class="text-end" style="width:160px">Thành tiền</th>
+                    <th style="width:60px"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="l : ${cart.lines}">
+                    <td th:text="${l.eventTitle}">Concert A</td>
+                    <td>
+                        <div class="fw-semibold" th:text="${l.ticketTypeName}">Vé thường</div>
+
+                        <div class="small text-muted" th:if="${l.holdId != null}">
+                            Giữ chỗ #<span th:text="${l.holdId}">0</span> • Hết hạn sau:
+                            <span class="countdown"
+                                  th:attr="data-hold-id=${l.holdId},data-exp=${l.holdExpiresAt}">--:--</span>
+                            <button type="button" class="btn btn-link btn-sm p-0 ms-1 renew-one"
+                                    th:attr="data-hold-id=${l.holdId}">
+                                Gia hạn
+                            </button>
+                        </div>
+                    </td>
+                    <td class="text-center" th:text="${l.qty}">1</td>
+                    <td class="text-end">
+                        <span class="price" th:text="${#numbers.formatInteger(l.unitPrice,0)}"></span> đ
+                    </td>
+                    <td class="text-end">
+                        <span class="price" th:text="${#numbers.formatInteger(l.lineTotal(),0)}"></span> đ
+                    </td>
+                    <td class="text-end">
+                            <form method="post" th:action="@{/cart/remove}">
+                                <input type="hidden" name="ticketTypeId" th:value="${l.ticketTypeId}">
+                                <button class="btn btn-sm btn-outline-danger">Xoá</button>
+                            </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Hành động + nút Checkout -->
+        <div class="p-3 d-flex justify-content-between align-items-center">
+            <form method="post" th:action="@{/cart/clear}">
+                <button class="btn btn-outline-secondary">Xoá toàn bộ</button>
+            </form>
+            <a href="/checkout" class="btn btn-primary btn-lg">Tiếp tục thanh toán</a>
+        </div>
+
+        <!-- PANEL TỔNG TIỀN + COUPON -->
+        <div class="p-3 pt-0">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3">Tạm tính</h5>
+
+                    <div class="input-group mb-2">
+                        <input id="couponInput" class="form-control" placeholder="Nhập mã giảm giá">
+                        <button class="btn btn-outline-primary" type="button" onclick="applyCoupon()">Áp dụng</button>
+                        <button class="btn btn-outline-secondary" type="button" onclick="clearCoupon()">Xoá</button>
+                    </div>
+                    <div id="couponMsg" class="small text-secondary mb-2"></div>
+
+                    <div id="ruleBadges" class="mb-2"></div>
+
+                    <div class="d-flex justify-content-between">
+                        <span>Tổng hàng</span>
+                        <b id="pp-subtotal">0 ₫</b>
+                    </div>
+                    <div class="d-flex justify-content-between text-success">
+                        <span>Giảm theo chương trình</span>
+                        <b id="pp-rules">-0 ₫</b>
+                    </div>
+                    <div class="d-flex justify-content-between text-success">
+                        <span>Giảm mã</span>
+                        <b id="pp-coupon">-0 ₫</b>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fs-5">
+                        <span>Thành tiền</span>
+                        <b id="pp-total">0 ₫</b>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /PANEL -->
+    </div>
+
+    <div class="mt-3 d-flex justify-content-between" th:if="${!cart.lines.isEmpty()}">
+        <a href="/" class="btn btn-link"><i class="bi bi-arrow-left"></i> Tiếp tục xem sự kiện</a>
+    </div>
+
+    <!-- ===== Hold countdown & renew (giữ nguyên logic của bạn) ===== -->
+    <script>
+        const RENEW_THRESHOLD_SEC = 0;
+        const renewedOnce = new Set();
+        const purgedOnce  = new Set();
+        const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+        let purgeInFlight = false;
+
+        async function purgeAndRemoveRow(el, holdId){
+            if (purgeInFlight) return;
+            purgeInFlight = true;
+            try { await fetch('/cart/purge-expired', { method:'POST' }); }
+            catch(_) {}
+            finally { purgeInFlight = false; }
+            const row = el.closest('tr'); if (row) row.remove();
+            window.dispatchEvent(new Event('cart:updated'));
+        }
+        async function renewHold(id){
+            try{
+                const r = await fetch(`/api/public/v1/inventory/holds/${id}/renew`, { method:'POST' });
+                if (!r.ok) {
+                    if ([409,400,404].includes(r.status)) {
+                        document.querySelectorAll(`.countdown[data-hold-id="${id}"]`)
+                            .forEach(el => purgeAndRemoveRow(el, id));
+                        renewedOnce.add(id);
+                    }
+                    return false;
+                }
+                const dto = await r.json();
+                document.querySelectorAll(`.countdown[data-hold-id="${id}"]`)
+                    .forEach(el => el.dataset.exp = dto.expiresAt);
+                return true;
+            }catch(_){ return false; }
+        }
+        function tick(){
+            const now = Date.now();
+            document.querySelectorAll('.countdown').forEach(el=>{
+                const expMs = Date.parse(el.dataset.exp||'');
+                if (Number.isNaN(expMs)) { el.textContent='--:--'; return; }
+                const left = Math.max(0, Math.floor((expMs - now)/1000));
+                el.textContent = fmt(left);
+                const id = el.dataset.holdId;
+                if (left <= 10) el.classList.add('text-danger'); else el.classList.remove('text-danger');
+                if (RENEW_THRESHOLD_SEC>0 && document.visibilityState==='visible' && left>0 && left<=RENEW_THRESHOLD_SEC && id && !renewedOnce.has(id)){
+                    renewedOnce.add(id); renewHold(id);
+                }
+                if (left===0 && id && !purgedOnce.has(id)){ purgedOnce.add(id); purgeAndRemoveRow(el,id); }
+            });
+        }
+        document.addEventListener('click', (e)=>{
+            const btn = e.target.closest('.renew-one'); if (!btn) return; renewHold(btn.dataset.holdId);
+        });
+        setInterval(tick, 1000);
+        document.addEventListener('DOMContentLoaded', tick);
+    </script>
+
+    <!-- ===== Pricing preview & coupon (giữ nguyên API của bạn) ===== -->
+    <script>
+        function vnd(n){ return new Intl.NumberFormat('vi-VN').format(Number(n||0)) + ' ₫'; }
+        window.refreshPreview = async function(){
+            const code = document.getElementById('couponInput')?.value || '';
+            const res = await fetch('/api/public/v1/pricing/preview', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ couponCode: code })
+            }).then(r=>r.json()).catch(()=>null);
+            if(!res) return;
+            document.getElementById('pp-subtotal').textContent = vnd(res.subtotal);
+            document.getElementById('pp-rules').textContent    = '-' + vnd(res.discountRules);
+            document.getElementById('pp-coupon').textContent   = '-' + vnd(res.discountCoupon);
+            document.getElementById('pp-total').textContent    = vnd(res.total);
+            const msg = document.getElementById('couponMsg');
+            msg.textContent = res.couponValid ? 'Mã áp dụng thành công.' : (res.couponMessage || '');
+            const badges = document.getElementById('ruleBadges');
+            badges.innerHTML = (res.ruleBadges||[]).map(b=>{
+                const until = b.endsAt ? new Date(b.endsAt).toLocaleString('vi-VN') : '';
+                return `<span class="badge text-bg-info me-1">${b.label}</span>
+                        <span class="small text-secondary me-2">${until?('đến '+until):''}</span>`;
+            }).join('');
+        }
+        window.applyCoupon = async function(){
+            const code = document.getElementById('couponInput')?.value || '';
+            const r = await fetch('/api/public/v1/coupons/apply', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ code })
+            }).then(x=>x.json()).catch(()=>null);
+            if(!r || !r.ok){ alert((r && r.message) || 'Không áp dụng được'); return; }
+            refreshPreview();
+        }
+        window.clearCoupon = async function(){
+            await fetch('/api/public/v1/coupons/clear', { method:'POST' }).catch(()=>{});
+            document.getElementById('couponInput').value = '';
+            refreshPreview();
+        }
+        document.addEventListener('DOMContentLoaded', refreshPreview);
+        window.addEventListener('cart:updated', refreshPreview);
+    </script>
+</section>
+</body>
+</html>

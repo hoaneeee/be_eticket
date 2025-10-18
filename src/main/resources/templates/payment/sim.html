@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="_layout :: html(~{::title}, ~{::style}, ~{::section})">
+<head>
+    <title>Thanh toán giả lập</title>
+    <style>.cardx{border:0;border-radius:16px;box-shadow:0 12px 36px rgba(16,24,40,.08)}</style>
+</head>
+<body>
+<section class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card cardx">
+                <div class="card-body p-4 text-center">
+                    <h4 class="fw-bold mb-3">Cổng thanh toán giả lập</h4>
+                    <p class="text-secondary">Mã đơn hàng: <b th:text="${orderCode}">ODxxxx</b></p>
+
+                    <form method="post" th:action="@{/payment/sim/success}" class="d-inline">
+                        <input type="hidden" name="orderCode" th:value="${orderCode}">
+                        <button class="btn btn-success btn-lg me-2">
+                            <i class="bi bi-check-circle"></i> Thanh toán thành công
+                        </button>
+                    </form>
+
+                    <form method="post" th:action="@{/payment/sim/fail}" class="d-inline">
+                        <input type="hidden" name="orderCode" th:value="${orderCode}">
+                        <button class="btn btn-outline-danger btn-lg">
+                            <i class="bi bi-x-circle"></i> Thất bại
+                        </button>
+                    </form>
+
+                    <div class="mt-3">
+                        <a href="/" class="btn btn-link">Về trang chủ</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

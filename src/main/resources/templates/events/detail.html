@@ -1,0 +1,485 @@
+<!--
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="_layout :: html(~{::title}, ~{::style}, ~{::section})">
+<head>
+    <title th:text="${e.title} + ' – E-Ticket'">Chi tiết sự kiện</title>
+
+    <style>
+        .banner {
+            position: relative; border-radius: 18px; overflow: hidden;
+            background: #eef2f7; min-height: 280px;
+            box-shadow: 0 12px 44px rgba(16,24,40,.12);
+        }
+        .banner .bg {
+            position:absolute; inset:0; background-size:cover; background-position:center;
+            filter: saturate(1.05);
+        }
+        .banner::after{
+            content:""; position:absolute; inset:0;
+            background: linear-gradient(180deg, rgba(10,12,18,0) 25%, rgba(10,12,18,.5));
+        }
+        .chip{
+            display:inline-flex; align-items:center; gap:8px;
+            background: rgba(15,23,42,.06); padding:8px 12px;
+            border-radius: 999px; font-weight:600;
+        }
+        .ticket-card{
+            border-radius:16px; overflow: hidden;
+            box-shadow: 0 6px 28px rgba(16,24,40,.08); border:0;
+        }
+        .ticket-card .price{
+            font-weight:800; font-size:1.2rem;
+        }
+        .sticky-box {
+            position: sticky; top: 24px;
+        }
+    </style>
+</head>
+<body>
+
+<section class="container">
+    &lt;!&ndash; Banner &ndash;&gt;
+    <div class="banner mb-4">
+        <div class="bg"
+             th:style="${e.bannerUrl} != null ? 'background-image:url(' + ${e.bannerUrl} + ')' : ''"></div>
+        <div class="position-absolute bottom-0 start-0 end-0 p-4 p-lg-5 text-white">
+            <div class="chip mb-3 bg-dark bg-opacity-50">
+                <i class="bi bi-calendar-event"></i>
+                <span th:text="${#temporals.format(e.eventDate, 'EEEE, dd/MM/yyyy • HH:mm')}">Thứ bảy, 31/12/2025 • 20:00</span>
+            </div>
+            <h1 class="display-6 fw-bold m-0" th:text="${e.title}">Tên sự kiện</h1>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        &lt;!&ndash; Cột trái: mô tả &ndash;&gt;
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-2 text-secondary mb-3">
+                        <i class="bi bi-geo-alt"></i>
+                        <span th:text="${e.venueName} ?: '—'">Địa điểm</span>
+                        <span class="text-muted" th:if="${e.venueAddress != null}">
+                           • <span th:text="${e.venueAddress}">Địa chỉ</span>
+                        </span>
+                    </div>
+
+                    <h5 class="fw-bold mb-2">Giới thiệu</h5>
+                    <div class="text-secondary lh-lg" th:utext="${#strings.defaultString(e.bannerUrl, '')}"></div>
+                    &lt;!&ndash; Nếu bạn có field e.description thì dùng: th:utext="${e.description}" &ndash;&gt;
+                    <div class="text-secondary lh-lg" th:if="${false}">
+                        Nội dung mô tả sự kiện…
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-0">
+                    <div class="p-4 pb-2 d-flex align-items-center justify-content-between">
+                        <h5 class="fw-bold m-0">Các loại vé</h5>
+                        <span th:if="${hasSeatMap}" class="badge text-bg-info">
+                          Sự kiện có sơ đồ ghế – giá có thể khác theo zone
+                        </span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table align-middle m-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th style="width:50%">Loại vé</th>
+                                <th class="text-center">Giá</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="t : ${types}">
+                                <td>
+                                    <div class="fw-semibold" th:text="${t.name}">Vé tiêu chuẩn</div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="price"
+                                          th:text="${#numbers.formatInteger(t.price, 0)} + ' ₫'">120.000 ₫</span>
+                                </td>
+
+                                &lt;!&ndash; Nếu CÓ seatMap: nút chọn chỗ &ndash;&gt;
+                                <td class="text-end" th:if="${hasSeatMap}">
+                                    <a th:href="@{'/events/' + ${e.slug} + '/seats'}"
+                                       class="btn btn-outline-primary">
+                                        <i class="bi bi-grid-3x3-gap"></i> Chọn chỗ
+                                    </a>
+                                </td>
+
+                                &lt;!&ndash; Nếu KHÔNG seatMap: input số lượng + nút +1 &ndash;&gt;
+                                <td class="text-end" th:if="${!hasSeatMap}">
+                                    <div class="input-group input-group-sm" style="width: 160px;">
+                                        <input type="number" class="form-control text-center qty"
+                                               min="0" max="10" value="0"
+                                               th:attr="data-ttid=${t.id}">
+                                        <button class="btn btn-primary"
+                                                th:attr="data-ttid=${t.id}"
+                                                onclick="addOne(this)">
+                                            +1
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr th:if="${#lists.isEmpty(types)}">
+                                <td colspan="3" class="text-center text-secondary py-4">Chưa cấu hình loại vé.</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    &lt;!&ndash; Nút Thêm vào giỏ: đặt NGAY dưới bảng, chỉ hiện khi không có seatMap &ndash;&gt;
+                    <div class="p-3 text-end" th:if="${!hasSeatMap}">
+                        <button class="btn btn-success" onclick="submitSelected()">
+                            Thêm vào giỏ
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <a href="/" class="btn btn-link">
+                    <i class="bi bi-arrow-left"></i> Về trang chủ
+                </a>
+            </div>
+        </div>
+
+        &lt;!&ndash; Cột phải: box thông tin nhanh &ndash;&gt;
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 sticky-box">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Thông tin</h5>
+                    <div class="d-flex align-items-start gap-3 mb-3">
+                        <i class="bi bi-calendar2-week fs-4 text-primary"></i>
+                        <div>
+                            <div class="fw-semibold">Thời gian</div>
+                            <div class="text-secondary" th:text="${#temporals.format(e.eventDate,'HH:mm dd/MM/yyyy')}">
+                                20:00 31/12/2025
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3">
+                        <i class="bi bi-geo fs-4 text-primary"></i>
+                        <div>
+                            <div class="fw-semibold">Địa điểm</div>
+                            <div class="text-secondary">
+                                <div th:text="${e.venueName} ?: '—'">Nhà hát lớn</div>
+                                <div th:text="${e.venueAddress} ?: ''"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div th:if="${hasSeatMap}" class="alert alert-info mb-0">
+                        Sự kiện có sơ đồ ghế. Hãy bấm <b>Chọn chỗ</b> tại bảng vé để tiếp tục.
+                    </div>
+                    <div th:if="${!hasSeatMap}" class="alert alert-secondary mb-0">
+                        Chọn số lượng từng loại vé và tiến hành thanh toán ở bước sau.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    &lt;!&ndash; JS gom so luong & goi /cart/add: dat truoc </body> &ndash;&gt;
+    <script>
+        function addOne(btn){
+            const id = btn.getAttribute('data-ttid');
+            const input = document.querySelector('input.qty[data-ttid="'+id+'"]');
+            if(!input) return;
+            const v = parseInt(input.value || '0', 10) + 1;
+            input.value = Math.min(v, parseInt(input.max || '10', 10));
+        }
+
+        function submitSelected(){
+            const rows = Array.from(document.querySelectorAll('input.qty[data-ttid]'));
+            const items = rows
+                .map(i => ({
+                    ticketTypeId: parseInt(i.getAttribute('data-ttid')),
+                    qty: parseInt(i.value || '0', 10)
+                }))
+                .filter(x => x.qty > 0);
+
+            if(items.length === 0){
+                alert('Chọn ít nhất 1 vé.');
+                return;
+            }
+
+            fetch('/cart/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items })
+            }).then(r => {
+                if (r.ok) {
+                    location.href = '/cart';
+                } else {
+                    r.text().then(t => alert(t || 'Không thể thêm vào giỏ'));
+                }
+            }).catch(() => alert('Lỗi mạng, vui lòng thử lại.'));
+        }
+    </script>
+</section>
+
+
+</body>
+</html>
+-->
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="_layout :: html(~{::title}, ~{::style}, ~{::section})">
+<head>
+    <title th:text="${e.title} + ' – E-Ticket'">Chi tiết sự kiện</title>
+
+    <style>
+        .banner {
+            position: relative;
+            border-radius: 18px;
+            overflow: hidden;
+            background: #eef2f7;
+            min-height: 280px;
+            box-shadow: 0 12px 44px rgba(16, 24, 40, .12)
+        }
+
+        .banner .bg {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            filter: saturate(1.05)
+        }
+
+        .banner::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(10, 12, 18, 0) 25%, rgba(10, 12, 18, .5))
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(15, 23, 42, .06);
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-weight: 600
+        }
+
+        .price {
+            font-weight: 800
+        }
+
+        .sticky-box {
+            position: sticky;
+            top: 24px
+        }
+    </style>
+</head>
+<body>
+<section class="container">
+
+    <!-- Banner -->
+    <div class="banner mb-4">
+        <div class="bg"
+             th:style="${e.bannerUrl} != null ? 'background-image:url(' + ${e.bannerUrl} + ')' : ''"></div>
+        <div class="position-absolute bottom-0 start-0 end-0 p-4 p-lg-5 text-white">
+            <div class="chip mb-3 bg-dark bg-opacity-50">
+                <i class="bi bi-calendar-event"></i>
+                <span th:text="${#temporals.format(e.eventDate,'EEEE, dd/MM/yyyy • HH:mm')}">Thứ bảy, 31/12/2025 • 20:00</span>
+            </div>
+            <h1 class="display-6 fw-bold m-0" th:text="${e.title}">Tên sự kiện</h1>
+        </div>
+    </div>
+
+    <!-- Badge ưu đãi -->
+    <div th:if="${priceRuleMsg != null}" class="alert alert-info d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-lightning-charge-fill"></i>
+        <b th:text="${priceRuleLabel}">FLASH</b>
+        <span th:text="${priceRuleMsg}">Giá đang giảm ...</span>
+    </div>
+
+    <div class="row g-4">
+        <!-- Trái: mô tả & bảng vé -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-2 text-secondary mb-3">
+                        <i class="bi bi-geo-alt"></i>
+                        <span th:text="${e.venueName} ?: '—'">Địa điểm</span>
+                        <span class="text-muted" th:if="${e.venueAddress != null}">
+                                • <span th:text="${e.venueAddress}">Địa chỉ</span>
+                            </span>
+                    </div>
+
+                    <h5 class="fw-bold mb-2">Giới thiệu</h5>
+                    <div class="text-secondary lh-lg" th:utext="${#strings.defaultString(e.description(), '')}"></div>
+                    <div class="text-secondary lh-lg" th:if="${false}">
+                        Nội dung mô tả sự kiện…
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-0">
+                    <div class="p-4 pb-2 d-flex align-items-center justify-content-between">
+                        <h5 class="fw-bold m-0">Các loại vé</h5>
+                        <span th:if="${hasSeatMap}" class="badge text-bg-info">
+                                Sự kiện có sơ đồ ghế – giá hiển thị theo zone (tham khảo)
+                            </span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table align-middle m-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th style="width:50%">Loại/Zone</th>
+                                <th class="text-center">Giá</th>
+                            </tr>
+                            </thead>
+
+                            <!-- 0 seat map: mua theo loại vé -->
+                            <tbody th:if="${!hasSeatMap}">
+                            <tr th:each="t : ${types}">
+                                <td>
+                                    <div class="fw-semibold" th:text="${t.name}">Vé tiêu chuẩn</div>
+                                </td>
+                                <td class="text-center">
+                                    <div>
+                                        <span class="price"
+                                              th:text="${#numbers.formatInteger(t.price,0)} + ' ₫'"></span>
+                                    </div>
+                                    <div class="small text-muted">
+                                        Còn: <b th:text="${availableMap[t.id]} ?: 0"></b>
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <div class="input-group input-group-sm" style="width: 160px;">
+                                        <input type="number" class="form-control text-center qty"
+                                               min="0" max="10" value="0" th:attr="data-ttid=${t.id}">
+                                        <button class="btn btn-primary" th:attr="data-ttid=${t.id}"
+                                                onclick="addOne(this)">+1
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(types)}">
+                                <td colspan="3" class="text-center text-secondary py-4">Chưa cấu hình loại vé.</td>
+                            </tr>
+                            </tbody>
+
+                            <!-- Có seat map: chỉ hiển thị giá tham khảo + nút chọn chỗ -->
+                            <tbody th:if="${hasSeatMap}">
+                            <tr th:each="t : ${types}">
+                                <td>
+                                    <div class="fw-semibold" th:text="${t.name}"></div>
+                                </td>
+                                <td class="text-center">
+                                    <div>
+                                        <span class="price"
+                                              th:text="${#numbers.formatInteger(t.price,0)} + ' ₫'"></span>
+                                    </div>
+                                    <div class="small text-muted">
+                                        Còn: <b th:text="${availableMap[t.id]} ?: 0"></b>
+                                    </div>
+                                </td>
+                                <td class="text-end text-muted small"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-center py-4">
+                                    <a th:href="@{'/events/' + ${e.slug} + '/seats'}"
+                                       class="btn btn-primary btn-lg px-4">
+                                        <i class="bi bi-grid-3x3-gap"></i> Chọn chỗ
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+
+                        </table>
+                    </div>
+
+                    <!-- Nút Thêm vào giỏ: chỉ hiện khi không có seatMap -->
+                    <div class="p-3 text-end" th:if="${!hasSeatMap}">
+                        <button class="btn btn-success" onclick="submitSelected()">Thêm vào giỏ</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <a href="/" class="btn btn-link"><i class="bi bi-arrow-left"></i> Về trang chủ</a>
+            </div>
+        </div>
+
+        <!-- Phải: thông tin nhanh -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 sticky-box">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Thông tin</h5>
+                    <div class="d-flex align-items-start gap-3 mb-3">
+                        <i class="bi bi-calendar2-week fs-4 text-primary"></i>
+                        <div>
+                            <div class="fw-semibold">Thời gian</div>
+                            <div class="text-secondary" th:text="${#temporals.format(e.eventDate,'HH:mm dd/MM/yyyy')}">
+                                20:00 31/12/2025
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3">
+                        <i class="bi bi-geo fs-4 text-primary"></i>
+                        <div>
+                            <div class="fw-semibold">Địa điểm</div>
+                            <div class="text-secondary">
+                                <div th:text="${e.venueName} ?: '—'">Nhà hát lớn</div>
+                                <div th:text="${e.venueAddress} ?: ''"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div th:if="${hasSeatMap}" class="alert alert-info mb-0">
+                        Sự kiện có sơ đồ ghế. Hãy bấm <b>Chọn chỗ</b> để tiếp tục.
+                    </div>
+                    <div th:if="${!hasSeatMap}" class="alert alert-secondary mb-0">
+                        Chọn số lượng từng loại vé và tiếp tục thanh toán ở bước sau.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS: khi 0 seat map -->
+    <script th:if="${!hasSeatMap}">
+        function addOne(btn) {
+            const id = btn.getAttribute('data-ttid');
+            const input = document.querySelector('input.qty[data-ttid="' + id + '"]');
+            if (!input) return;
+            const v = parseInt(input.value || '0', 10) + 1;
+            input.value = Math.min(v, parseInt(input.max || '10', 10));
+        }
+
+        function submitSelected() {
+            const rows = Array.from(document.querySelectorAll('input.qty[data-ttid]'));
+            const items = rows.map(i => ({
+                ticketTypeId: parseInt(i.getAttribute('data-ttid')),
+                qty: parseInt(i.value || '0', 10)
+            })).filter(x => x.qty > 0);
+
+            if (items.length === 0) {
+                alert('Chọn ít nhất 1 vé.');
+                return;
+            }
+
+            fetch('/cart/add', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({items})
+            }).then(r => {
+                if (r.ok) location.href = '/cart';
+                else r.text().then(t => alert(t || 'Không thể thêm vào giỏ'));
+            }).catch(() => alert('Lỗi mạng, vui lòng thử lại.'));
+        }
+    </script>
+</section>
+</body>
+</html>

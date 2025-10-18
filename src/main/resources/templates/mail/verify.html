@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Xác thực email</title>
+</head>
+<body style="font-family:system-ui,Arial,sans-serif;line-height:1.5">
+<h2 style="margin:0 0 12px">Xác thực email E-Ticket</h2>
+<p>Xin chào <b th:text="${fullName}">User</b>,</p>
+<p>Nhấn vào nút bên dưới để hoàn tất kích hoạt tài khoản:</p>
+<p>
+    <a th:href="${link}"
+       style="background:#0d6efd;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;display:inline-block">
+        Xác thực email
+    </a>
+</p>
+<p>Nếu nút không bấm được, sao chép link sau vào trình duyệt:</p>
+<p><code th:text="${link}">https://example.com</code></p>
+<p>Liên kết hết hạn sau <b th:text="${expMinutes}">30</b> phút.</p>
+</body>
+</html>

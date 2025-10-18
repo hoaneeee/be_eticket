@@ -1,0 +1,390 @@
+<!--
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="_layout :: html(~{::title}, ~{::style}, ~{::section})">
+<head>
+    <title>Đơn hàng</title>
+    <style>.cardx{border:0;border-radius:16px;box-shadow:0 12px 36px rgba(16,24,40,.08)}</style>
+</head>
+<body>
+<section class="container" th:if="${order != null}">
+    <div class="card cardx">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <h4 class="fw-bold mb-1">Đơn hàng <span th:text="${order.code}">CODE</span></h4>
+                    <div class="text-secondary">
+                        Trạng thái: <b th:text="${order.status}">PENDING</b>
+                    </div>
+                </div>
+                <div class="h5 m-0">
+                    Tổng: <span th:text="${#numbers.formatInteger(order.total,0)}">0</span> ₫
+                </div>
+            </div>
+            <hr>
+
+            <div class="table-responsive">
+                <table class="table align-middle m-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Loại vé</th>
+                        <th class="text-center">SL</th>
+                        <th class="text-end">Đơn giá</th>
+                        <th class="text-end">Thành tiền</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="it : ${order.items}">
+                        <td th:text="${it.ticketType != null ? it.ticketType.name : it.displayName}">Vé</td>
+                        <td class="text-center" th:text="${it.qty}">1</td>
+                        <td class="text-end" th:text="${#numbers.formatInteger(it.price,0)}">0</td>
+                        <td class="text-end" th:text="${#numbers.formatInteger(it.lineTotal,0)}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            &lt;!&ndash; Nút quay lại + thanh toán &ndash;&gt;
+            <div class="mt-4 d-flex flex-wrap gap-2 align-items-center">
+                <a href="/orders" class="btn btn-link"><i class="bi bi-arrow-left"></i> Danh sách đơn</a>
+
+                <th:block th:if="${order.status != null and order.status.name() != 'PAID'}">
+                    <a th:href="@{/payment/momo/pay(orderCode=${order.code})}"      class="btn btn-primary">Ví MoMo</a>
+                    <a th:href="@{/payment/momo/atm/pay(orderCode=${order.code})}"  class="btn btn-outline-primary">Thẻ ATM (MoMo)</a>
+                </th:block>
+
+                <a class="btn btn-outline-danger"
+                   th:if="${refundable}"
+                   th:href="@{'/orders/' + ${order.code} + '/refund'}">
+                    <i class="bi bi-arrow-counterclockwise"></i> Yêu cầu hoàn tiền
+                </a>
+            </div>
+
+            <div th:if="${order.status != null and order.status.name() == 'PAID'}"
+                 class="alert alert-success mt-3">
+                Thanh toán thành công. Vé/QR đã sẵn sàng.
+            </div>
+
+            &lt;!&ndash; Vé của bạn &ndash;&gt;
+            <div class="mt-4" th:if="${tickets != null and !#lists.isEmpty(tickets)}">
+                <h5 class="fw-bold">Vé của bạn</h5>
+                <div class="row g-3">
+                    <div class="col-md-4" th:each="t : ${tickets}">
+                        <div class="border rounded-3 p-3 h-100">
+                            <div class="small text-secondary">Mã vé</div>
+                            <div class="h5 fw-bold" th:text="${t.code}">TCK-XXXXXX</div>
+                            <img th:if="${t.qrImagePath != null}"
+                                 th:src="${t.qrImagePath}"
+                                 alt="QR"
+                                 class="img-fluid rounded border mb-2">
+                            <div class="d-flex gap-2">
+                                <a th:href="${t.qrImagePath}" download
+                                   class="btn btn-outline-primary btn-sm">
+                                    Tải ảnh
+                                </a>
+                                <span class="badge"
+                                      th:classappend="${t.status.name()=='CHECKED_IN' ? 'text-bg-success' : 'text-bg-secondary'}"
+                                      th:text="${t.status}">
+                  NEW
+                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            &lt;!&ndash; Lịch sử refund &ndash;&gt;
+            <div class="mt-4" th:if="${refunds != null and !#lists.isEmpty(refunds)}">
+                <h6 class="fw-bold">Yêu cầu hoàn tiền</h6>
+                <ul class="list-group">
+                    <li class="list-group-item" th:each="r : ${refunds}">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div>Trạng thái: <b th:text="${r.status}">PENDING</b></div>
+                                <div class="text-secondary small" th:text="${r.reason}">Lý do</div>
+                            </div>
+                            <div><b th:text="${#numbers.formatInteger(r.amount,0)}">0</b> ₫</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            &lt;!&ndash; Thanh toán gần nhất (nếu có) &ndash;&gt;
+            <div class="mt-4" th:if="${payment != null}">
+                <h6 class="fw-bold">Thanh toán gần nhất</h6>
+                <div class="small">
+                    Cổng: <b th:text="${payment.provider}">MOMO</b> •
+                    Trạng thái: <b th:text="${payment.status}">PENDING</b> •
+                    Số tiền: <b th:text="${#numbers.formatInteger(payment.amount,0)}">0</b> ₫
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>
+-->
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="_layout :: html(~{::title}, ~{::style}, ~{::section})">
+<head>
+    <title>Chi tiết đơn hàng</title>
+    <style>
+        /* === CARD STYLE === */
+        .cardx {
+            border: 0;
+            border-radius: 20px;
+            box-shadow: 0 12px 36px rgba(16, 24, 40, 0.08);
+            background-color: #ffffff;
+            transition: all 0.3s ease;
+        }
+        .cardx:hover {
+            box-shadow: 0 16px 40px rgba(120, 80, 200, 0.1);
+        }
+
+        /* === TABLE === */
+        .table th {
+            background-color: #faf7ff;
+            color: #4b2c82;
+            border-top: none;
+            font-weight: 600;
+        }
+        .table td {
+            vertical-align: middle;
+        }
+
+        /* === BUTTONS === */
+        .btn-primary {
+            background-color: #7b2cbf;
+            border-color: #7b2cbf;
+        }
+        .btn-primary:hover {
+            background-color: #5a1e8a;
+            border-color: #5a1e8a;
+        }
+        .btn-outline-primary {
+            color: #7b2cbf;
+            border-color: #7b2cbf;
+        }
+        .btn-outline-primary:hover {
+            background-color: #7b2cbf;
+            color: #fff;
+        }
+
+        /* === QR SECTION === */
+        .text-gradient {
+            background: linear-gradient(90deg, #7b2ff7, #f107a3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .qr-section {
+            text-align: center;
+        }
+        .qr-box {
+            transition: all 0.25s ease;
+        }
+        .qr-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(123, 47, 247, 0.2);
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, #7b2ff7, #f107a3);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #f107a3, #7b2ff7);
+        }
+
+        /* === TICKET BOX === */
+        .ticket-box {
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+        .ticket-box:hover {
+            border-color: #7b2cbf;
+            box-shadow: 0 0 10px rgba(123, 44, 191, 0.1);
+        }
+
+        /* === BADGES === */
+        .badge {
+            font-size: 0.75rem;
+            padding: 5px 10px;
+            border-radius: 10px;
+        }
+        .text-bg-success {
+            background-color: #d1f7c4 !important;
+            color: #1f7a1f !important;
+        }
+        .text-bg-secondary {
+            background-color: #f1f1f1 !important;
+            color: #555 !important;
+        }
+
+        /* === TITLES === */
+        h4, h5, h6 {
+            color: #4b2c82;
+        }
+
+        .alert-success {
+            background-color: #f3edff;
+            color: #5a1e8a;
+            border-color: #e2d2ff;
+        }
+        .alert-warning {
+            background-color: #fff4e0;
+            border-color: #ffe2b2;
+            color: #9b5e00;
+        }
+
+        .container {
+            max-width: 900px;
+        }
+    </style>
+</head>
+<body>
+
+<section class="container" th:if="${order != null}">
+    <div class="card cardx mt-4 mb-5">
+        <div class="card-body p-4">
+            <!-- Thông tin chung -->
+            <div class="d-flex justify-content-between flex-wrap">
+                <div>
+                    <h4 class="fw-bold mb-1">
+                        Đơn hàng <span th:text="${order.code}">CODE</span>
+                    </h4>
+                    <div class="text-secondary">
+                        Trạng thái: <b th:text="${order.status}">PENDING</b>
+                    </div>
+                    <div class="text-secondary">
+                        Ngày tạo: <span th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">--</span>
+                    </div>
+                </div>
+                <div class="h5 m-0 mt-2 mt-md-0 text-md-end">
+                    Tổng: <span th:text="${#numbers.formatInteger(order.total,0)}">0</span> ₫
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- Chi tiết vé -->
+            <div class="table-responsive">
+                <table class="table align-middle m-0">
+                    <thead>
+                    <tr>
+                        <th>Loại vé</th>
+                        <th class="text-center">Số lượng</th>
+                        <th class="text-end">Đơn giá</th>
+                        <th class="text-end">Thành tiền</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="it : ${order.items}">
+                        <td th:text="${it.ticketType != null ? it.ticketType.name : it.displayName}">Vé</td>
+                        <td class="text-center" th:text="${it.qty}">1</td>
+                        <td class="text-end" th:text="${#numbers.formatInteger(it.price,0)}">0</td>
+                        <td class="text-end" th:text="${#numbers.formatInteger(it.lineTotal,0)}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Thanh toán -->
+            <div class="mt-4 d-flex flex-wrap gap-2 align-items-center">
+                <a href="/orders" class="btn btn-link">
+                    <i class="bi bi-arrow-left"></i> Quay lại danh sách
+                </a>
+
+                <th:block th:if="${order.status != null and order.status.name() != 'PAID'}">
+                    <a th:href="@{/payment/momo/pay(orderCode=${order.code})}" class="btn btn-primary">
+                        Thanh toán qua Ví MoMo
+                    </a>
+                    <a th:href="@{/payment/momo/atm/pay(orderCode=${order.code})}" class="btn btn-outline-primary">
+                        Thanh toán qua Thẻ ATM
+                    </a>
+                </th:block>
+
+                <a class="btn btn-outline-danger"
+                   th:if="${refundable}"
+                   th:href="@{'/orders/' + ${order.code} + '/refund'}">
+                    <i class="bi bi-arrow-counterclockwise"></i> Yêu cầu hoàn tiền
+                </a>
+            </div>
+
+            <!-- Thông báo -->
+            <div th:if="${order.status != null and order.status.name() == 'PAID'}"
+                 class="alert alert-success mt-3">
+                ✅ Thanh toán thành công. Vé và mã QR của bạn đã sẵn sàng.
+            </div>
+
+            <!-- Vé của bạn -->
+            <th:block th:if="${order.status != null and order.status.name() == 'PAID'}">
+                <h5 class="fw-bold mt-4 mb-3">Vé của bạn</h5>
+                <div class="row g-3" th:if="${tickets != null and !#lists.isEmpty(tickets)}">
+                    <div class="col-md-4" th:each="t : ${tickets}">
+                        <div class="ticket-box h-100">
+                            <div class="small text-secondary">Mã vé</div>
+                            <div class="h5 fw-bold" th:text="${t.code}">TCK-XXXXXX</div>
+                            <span class="badge"
+                                  th:classappend="${t.status != null and t.status.name()=='CHECKED_IN' ? 'text-bg-success' : 'text-bg-secondary'}"
+                                  th:text="${t.status != null ? t.status.name() : 'NEW'}">NEW</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-warning mt-3"
+                     th:if="${tickets == null or #lists.isEmpty(tickets)}">
+                    Chưa có vé để hiển thị.
+                </div>
+            </th:block>
+
+            <!-- ✅ QR Code đơn hàng -->
+            <div class="qr-section text-center mt-5" th:if="${order.qrImagePath != null}">
+                <h5 class="fw-bold mb-3 text-gradient">QR Code Đơn hàng</h5>
+
+                <div class="qr-box shadow-sm border rounded-4 d-inline-block p-4 bg-white">
+                    <img th:src="@{${order.qrImagePath}}" alt="QR đơn hàng"
+                         class="img-fluid rounded-3 mb-3"
+                         style="max-width:220px;">
+
+                    <div>
+                        <a th:href="@{${order.qrImagePath}}" download
+                           class="btn btn-primary btn-sm px-3 py-2 shadow-sm">
+                            <i class="bi bi-download me-1"></i> Tải ảnh QR
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <!-- Hoàn tiền -->
+            <div class="mt-5" th:if="${refunds != null and !#lists.isEmpty(refunds)}">
+                <h6 class="fw-bold mb-2">Yêu cầu hoàn tiền</h6>
+                <ul class="list-group">
+                    <li class="list-group-item" th:each="r : ${refunds}">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div>Trạng thái: <b th:text="${r.status}">PENDING</b></div>
+                                <div class="text-secondary small" th:text="${r.reason}">Lý do</div>
+                            </div>
+                            <div><b th:text="${#numbers.formatInteger(r.amount,0)}">0</b> ₫</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Thanh toán gần nhất -->
+            <div class="mt-4" th:if="${payment != null}">
+                <h6 class="fw-bold">Thông tin thanh toán gần nhất</h6>
+                <div class="small">
+                    Cổng: <b th:text="${payment.provider}">MOMO</b> •
+                    Trạng thái: <b th:text="${payment.status}">PENDING</b> •
+                    Số tiền: <b th:text="${#numbers.formatInteger(payment.amount,0)}">0</b> ₫
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+</body>
+</html>

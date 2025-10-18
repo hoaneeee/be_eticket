@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{_layout :: html(~{::title}, ~{}, ~{::content})}">
+<head>
+    <title>Kết quả thanh toán</title>
+</head>
+<body>
+<th:block th:fragment="content">
+    <section class="container">
+        <div class="card border-0 rounded-4 shadow-sm">
+            <div class="card-body p-4">
+                <h4 class="fw-bold">Thanh toán MoMo</h4>
+
+                <!-- FIX: chỉ báo thành công khi ok=true (chữ ký hợp lệ + resultCode=0) -->
+                <div th:if="${ok}" class="alert alert-success">
+                    Thanh toán hợp lệ! Hệ thống sẽ cập nhật đơn hàng ngay sau khi nhận IPN (nếu chưa).
+                </div>
+                <!-- FIX: còn lại báo cảnh báo/ lỗi -->
+                <div th:if="${!ok}" class="alert alert-warning">
+                    Thanh toán chưa thành công: <span th:text="${message}">Vui lòng thử lại</span>.
+                    Bạn có thể quay về đơn hàng để thanh toán lại.
+                </div>
+
+                <a th:href="@{/orders}" class="btn btn-primary mt-2">Xem vé / Đơn hàng của tôi</a>
+            </div>
+        </div>
+    </section>
+</th:block>
+</body>
+</html>

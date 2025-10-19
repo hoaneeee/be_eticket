@@ -21610,3 +21610,90 @@ org.thymeleaf.exceptions.TemplateProcessingException: Fragment '_layout :: html(
 2025-10-19T19:12:51.740+07:00  WARN 42324 --- [E-Ticket] [http-nio-8080-exec-10] actStandardFragmentInsertionTagProcessor : [THYMELEAF][http-nio-8080-exec-10][orders/detail] Deprecated unwrapped fragment expression "_layout :: html(~{::title}, ~{::style}, ~{::section})" found in template orders/detail, line 129, col 7. Please use the complete syntax of fragment expressions instead ("~{_layout :: html(~{::title}, ~{::style}, ~{::section})}"). The old, unwrapped syntax for fragment expressions will be removed in future versions of Thymeleaf.
 2025-10-19T19:12:53.020+07:00  WARN 42324 --- [E-Ticket] [http-nio-8080-exec-9] actStandardFragmentInsertionTagProcessor : [THYMELEAF][http-nio-8080-exec-9][orders/list] Deprecated unwrapped fragment expression "_layout :: html(~{::title}, ~{::style}, ~{::section})" found in template orders/list, line 3, col 7. Please use the complete syntax of fragment expressions instead ("~{_layout :: html(~{::title}, ~{::style}, ~{::section})}"). The old, unwrapped syntax for fragment expressions will be removed in future versions of Thymeleaf.
 2025-10-19T19:12:54.297+07:00  WARN 42324 --- [E-Ticket] [http-nio-8080-exec-4] actStandardFragmentInsertionTagProcessor : [THYMELEAF][http-nio-8080-exec-4][orders/detail] Deprecated unwrapped fragment expression "_layout :: html(~{::title}, ~{::style}, ~{::section})" found in template orders/detail, line 129, col 7. Please use the complete syntax of fragment expressions instead ("~{_layout :: html(~{::title}, ~{::style}, ~{::section})}"). The old, unwrapped syntax for fragment expressions will be removed in future versions of Thymeleaf.
+2025-10-19T21:38:00.715+07:00  WARN 42324 --- [E-Ticket] [http-nio-8080-exec-3] actStandardFragmentInsertionTagProcessor : [THYMELEAF][http-nio-8080-exec-3][index] Deprecated unwrapped fragment expression "_layout :: html(~{::title}, ~{::style}, ~{::section})" found in template index, line 3, col 7. Please use the complete syntax of fragment expressions instead ("~{_layout :: html(~{::title}, ~{::style}, ~{::section})}"). The old, unwrapped syntax for fragment expressions will be removed in future versions of Thymeleaf.
+2025-10-19T21:38:01.962+07:00  WARN 42324 --- [E-Ticket] [http-nio-8080-exec-6] actStandardFragmentInsertionTagProcessor : [THYMELEAF][http-nio-8080-exec-6][events/detail] Deprecated unwrapped fragment expression "_layout :: html(~{::title}, ~{::style}, ~{::section})" found in template events/detail, line 232, col 7. Please use the complete syntax of fragment expressions instead ("~{_layout :: html(~{::title}, ~{::style}, ~{::section})}"). The old, unwrapped syntax for fragment expressions will be removed in future versions of Thymeleaf.
+2025-10-19T21:38:07.328+07:00  WARN 42324 --- [E-Ticket] [http-nio-8080-exec-5] actStandardFragmentInsertionTagProcessor : [THYMELEAF][http-nio-8080-exec-5][checkout/index] Deprecated unwrapped fragment expression "_layout :: html(~{::title}, ~{::style}, ~{::section})" found in template checkout/index, line 3, col 7. Please use the complete syntax of fragment expressions instead ("~{_layout :: html(~{::title}, ~{::style}, ~{::section})}"). The old, unwrapped syntax for fragment expressions will be removed in future versions of Thymeleaf.
+2025-10-19T21:40:42.940+07:00  WARN 4940 --- [E-Ticket] [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Cannot deserialize session attribute [SPRING_SECURITY_CONTEXT] for session [6D287A96E04A4D16C2F9155306B8C547]
+2025-10-19T21:40:42.943+07:00 ERROR 4940 --- [E-Ticket] [restartedMain] o.a.catalina.session.StandardManager     : Exception loading sessions from persistent storage
+
+java.io.InvalidClassException: [Ljava.lang.StackTraceElement;; no valid constructor
+	at java.base/java.io.ObjectStreamClass$ExceptionInfo.newInvalidClassException(ObjectStreamClass.java:173) ~[na:na]
+	at java.base/java.io.ObjectStreamClass.checkDeserialize(ObjectStreamClass.java:792) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readOrdinaryObject(ObjectInputStream.java:2253) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readObject0(ObjectInputStream.java:1762) ~[na:na]
+	at java.base/java.io.ObjectInputStream$FieldValues.<init>(ObjectInputStream.java:2618) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readSerialData(ObjectInputStream.java:2469) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readOrdinaryObject(ObjectInputStream.java:2284) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readObject0(ObjectInputStream.java:1762) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readObject(ObjectInputStream.java:540) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readObject(ObjectInputStream.java:498) ~[na:na]
+	at java.base/java.util.ArrayList.readObject(ArrayList.java:981) ~[na:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at java.base/java.io.ObjectStreamClass.invokeReadObject(ObjectStreamClass.java:1102) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readSerialData(ObjectInputStream.java:2444) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readOrdinaryObject(ObjectInputStream.java:2284) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readObject0(ObjectInputStream.java:1762) ~[na:na]
+	at java.base/java.io.ObjectInputStream$FieldValues.<init>(ObjectInputStream.java:2618) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readSerialData(ObjectInputStream.java:2469) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readOrdinaryObject(ObjectInputStream.java:2284) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readObject0(ObjectInputStream.java:1762) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readObject(ObjectInputStream.java:540) ~[na:na]
+	at java.base/java.io.ObjectInputStream.readObject(ObjectInputStream.java:498) ~[na:na]
+	at org.apache.catalina.session.StandardSession.doReadObject(StandardSession.java:1189) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.session.StandardSession.readObjectData(StandardSession.java:822) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.session.StandardManager.doLoad(StandardManager.java:210) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.session.StandardManager.load(StandardManager.java:156) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.session.StandardManager.startInternal(StandardManager.java:345) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.core.StandardContext.startInternal(StandardContext.java:4491) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1203) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1193) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317) ~[na:na]
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:75) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:145) ~[na:na]
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:749) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.core.StandardHost.startInternal(StandardHost.java:772) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1203) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.core.ContainerBase$StartChild.call(ContainerBase.java:1193) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317) ~[na:na]
+	at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:75) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at java.base/java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:145) ~[na:na]
+	at org.apache.catalina.core.ContainerBase.startInternal(ContainerBase.java:749) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.core.StandardEngine.startInternal(StandardEngine.java:203) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.core.StandardService.startInternal(StandardService.java:412) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.core.StandardServer.startInternal(StandardServer.java:870) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.apache.catalina.startup.Tomcat.start(Tomcat.java:438) ~[tomcat-embed-core-10.1.44.jar:10.1.44]
+	at org.springframework.boot.web.embedded.tomcat.TomcatWebServer.initialize(TomcatWebServer.java:128) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.web.embedded.tomcat.TomcatWebServer.<init>(TomcatWebServer.java:107) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory.getTomcatWebServer(TomcatServletWebServerFactory.java:517) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory.getWebServer(TomcatServletWebServerFactory.java:219) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.createWebServer(ServletWebServerApplicationContext.java:193) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.onRefresh(ServletWebServerApplicationContext.java:167) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:621) ~[spring-context-6.2.10.jar:6.2.10]
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:752) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:439) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:318) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1361) ~[spring-boot-3.5.5.jar:3.5.5]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1350) ~[spring-boot-3.5.5.jar:3.5.5]
+	at com.example.E_Ticket.ETicketApplication.main(ETicketApplication.java:16) ~[classes/:na]
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580) ~[na:na]
+	at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:50) ~[spring-boot-devtools-3.5.5.jar:3.5.5]
+
+2025-10-19T21:40:43.606+07:00  WARN 4940 --- [E-Ticket] [restartedMain] org.hibernate.dialect.Dialect            : HHH000511: The 5.5.5 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly. The minimum supported version is 8.0.0. Check the community dialects project for available legacy versions.
+2025-10-19T21:40:46.455+07:00  WARN 4940 --- [E-Ticket] [restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-10-19T21:40:53.919+07:00  WARN 4940 --- [E-Ticket] [http-nio-8080-exec-3] actStandardFragmentInsertionTagProcessor : [THYMELEAF][http-nio-8080-exec-3][index] Deprecated unwrapped fragment expression "_layout :: html(~{::title}, ~{::style}, ~{::section})" found in template index, line 3, col 7. Please use the complete syntax of fragment expressions instead ("~{_layout :: html(~{::title}, ~{::style}, ~{::section})}"). The old, unwrapped syntax for fragment expressions will be removed in future versions of Thymeleaf.
+2025-10-19T21:40:55.239+07:00  WARN 4940 --- [E-Ticket] [http-nio-8080-exec-8] actStandardFragmentInsertionTagProcessor : [THYMELEAF][http-nio-8080-exec-8][events/detail] Deprecated unwrapped fragment expression "_layout :: html(~{::title}, ~{::style}, ~{::section})" found in template events/detail, line 232, col 7. Please use the complete syntax of fragment expressions instead ("~{_layout :: html(~{::title}, ~{::style}, ~{::section})}"). The old, unwrapped syntax for fragment expressions will be removed in future versions of Thymeleaf.
+2025-10-19T21:41:00.656+07:00  WARN 4940 --- [E-Ticket] [http-nio-8080-exec-9] actStandardFragmentInsertionTagProcessor : [THYMELEAF][http-nio-8080-exec-9][checkout/index] Deprecated unwrapped fragment expression "_layout :: html(~{::title}, ~{::style}, ~{::section})" found in template checkout/index, line 3, col 7. Please use the complete syntax of fragment expressions instead ("~{_layout :: html(~{::title}, ~{::style}, ~{::section})}"). The old, unwrapped syntax for fragment expressions will be removed in future versions of Thymeleaf.
+2025-10-19T21:42:21.670+07:00  WARN 4940 --- [E-Ticket] [http-nio-8080-exec-4] actStandardFragmentInsertionTagProcessor : [THYMELEAF][http-nio-8080-exec-4][orders/detail] Deprecated unwrapped fragment expression "_layout :: html(~{::title}, ~{::style}, ~{::section})" found in template orders/detail, line 129, col 7. Please use the complete syntax of fragment expressions instead ("~{_layout :: html(~{::title}, ~{::style}, ~{::section})}"). The old, unwrapped syntax for fragment expressions will be removed in future versions of Thymeleaf.
+2025-10-19T21:42:33.229+07:00  WARN 4940 --- [E-Ticket] [http-nio-8080-exec-3] actStandardFragmentInsertionTagProcessor : [THYMELEAF][http-nio-8080-exec-3][orders/list] Deprecated unwrapped fragment expression "_layout :: html(~{::title}, ~{::style}, ~{::section})" found in template orders/list, line 3, col 7. Please use the complete syntax of fragment expressions instead ("~{_layout :: html(~{::title}, ~{::style}, ~{::section})}"). The old, unwrapped syntax for fragment expressions will be removed in future versions of Thymeleaf.
+2025-10-19T21:42:34.547+07:00  WARN 4940 --- [E-Ticket] [http-nio-8080-exec-2] actStandardFragmentInsertionTagProcessor : [THYMELEAF][http-nio-8080-exec-2][index] Deprecated unwrapped fragment expression "_layout :: html(~{::title}, ~{::style}, ~{::section})" found in template index, line 3, col 7. Please use the complete syntax of fragment expressions instead ("~{_layout :: html(~{::title}, ~{::style}, ~{::section})}"). The old, unwrapped syntax for fragment expressions will be removed in future versions of Thymeleaf.
+2025-10-19T21:42:36.113+07:00  WARN 4940 --- [E-Ticket] [http-nio-8080-exec-10] actStandardFragmentInsertionTagProcessor : [THYMELEAF][http-nio-8080-exec-10][events/detail] Deprecated unwrapped fragment expression "_layout :: html(~{::title}, ~{::style}, ~{::section})" found in template events/detail, line 232, col 7. Please use the complete syntax of fragment expressions instead ("~{_layout :: html(~{::title}, ~{::style}, ~{::section})}"). The old, unwrapped syntax for fragment expressions will be removed in future versions of Thymeleaf.
+2025-10-19T21:42:42.191+07:00  WARN 4940 --- [E-Ticket] [http-nio-8080-exec-1] actStandardFragmentInsertionTagProcessor : [THYMELEAF][http-nio-8080-exec-1][checkout/index] Deprecated unwrapped fragment expression "_layout :: html(~{::title}, ~{::style}, ~{::section})" found in template checkout/index, line 3, col 7. Please use the complete syntax of fragment expressions instead ("~{_layout :: html(~{::title}, ~{::style}, ~{::section})}"). The old, unwrapped syntax for fragment expressions will be removed in future versions of Thymeleaf.

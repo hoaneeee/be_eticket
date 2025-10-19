@@ -61,21 +61,23 @@ public class BankTransferServiceImpl implements BankTransferService {
         if (!"in".equalsIgnoreCase(webhook.transferType())) {
             return false;
         }
-
         if (!BANK_ACCOUNT.equals(webhook.accountNumber())) {
             return false;
         }
-        String content = webhook.content();
-        if (content == null || content.trim().isEmpty()) {
+
+        String rawCode = webhook.code();
+        if (rawCode == null || rawCode.trim().isEmpty()) {
+            rawCode = webhook.content();
+        }
+        
+        if (rawCode == null || rawCode.trim().isEmpty()) {
             return false;
         }
-        content = content.replace(" ", "").replace("+", "");
-    
-        String orderCode = content;
-        if (content.toUpperCase().startsWith("DH")) {
-            orderCode = content.substring(2);
+        String cleanedCode = rawCode.replace(" ", "").replace("+", "");
+        String orderCode = cleanedCode;
+        if (cleanedCode.toUpperCase().startsWith("DH")) {
+            orderCode = cleanedCode.substring(2);
         }
-
         Order order = orderRepository.findByCode(orderCode).orElse(null);
         if (order == null) {
             return false;

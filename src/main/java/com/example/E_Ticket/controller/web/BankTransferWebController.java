@@ -35,7 +35,7 @@ public class BankTransferWebController {
         Order order = bankTransferService.getOrderByCode(orderCode);
 
         long amount = order.getTotal().longValue();
-        String addInfo = "DH " + orderCode;
+        String addInfo = "DH" + orderCode;
         String qrImageUrl = String.format(
             "https://img.vietqr.io/image/mbbank-0000153686666-compact.jpg?amount=%d&addInfo=%s",
             amount,

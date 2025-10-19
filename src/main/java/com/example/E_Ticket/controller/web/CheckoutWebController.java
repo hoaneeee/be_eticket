@@ -227,6 +227,7 @@ public class CheckoutWebController {
         return switch (paymentMethod) {
             case "MOMO_ATM" -> "redirect:/payment/momo/atm/pay?orderCode=" + order.getCode();
             case "COD" -> "redirect:/orders/" + order.getCode() + "?pending_cod=1";
+            case "BANK_TRANSFER" -> "redirect:/payment/bank-transfer/pay?orderCode=" + order.getCode();
             default -> "redirect:/payment/momo/pay?orderCode=" + order.getCode();
         };
     }

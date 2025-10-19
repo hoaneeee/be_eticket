@@ -52,7 +52,12 @@ public class SecurityConfig {
     @Bean @Order(2)
     public SecurityFilterChain webChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/payment/momo/ipn", "/perform_login","/cart/**")) //  tắt cho nhẹ. PROD: bật lại cho form POST
+                .csrf(csrf -> csrf.ignoringRequestMatchers(
+                        "/payment/momo/ipn", 
+                        "/perform_login",
+                        "/cart/**",
+                        "/webhooks/**"  
+                ))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(HttpMethod.POST, "/cart/**").permitAll()
                         .requestMatchers("/", "/index", "/register", "/login",
@@ -62,6 +67,7 @@ public class SecurityConfig {
                                 "/h2-console/**", "/error", "/favicon.ico","/whoami").permitAll()
                         .requestMatchers("/cart/**").permitAll()
                         .requestMatchers("/payment/momo/ipn","/payment/momo/return").permitAll()
+                        .requestMatchers("/webhooks/**").permitAll()
                         .requestMatchers("/checkout/**", "/orders/**","/payment/**","/web/me/**").authenticated()
                         .anyRequest().authenticated()
                 )

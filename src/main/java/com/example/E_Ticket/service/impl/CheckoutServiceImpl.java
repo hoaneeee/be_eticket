@@ -54,7 +54,6 @@ public class CheckoutServiceImpl implements CheckoutService {
         order.setEvent(orderEvent);
         order.setTotal(total);
         order.setStatus(Order.Status.PENDING);
-        order.setPaymentMethod("BANK");
         order.setCreatedAt(Instant.now());
         order = orderRepo.save(order);
 
@@ -67,14 +66,6 @@ public class CheckoutServiceImpl implements CheckoutService {
             it.setPrice(unitPriceFromCartOrTicket(l, tt));
             orderItemRepo.save(it);
         }
-
-        Payment pm = new Payment();
-        pm.setOrder(order);
-        pm.setProvider("BANK");
-        pm.setAmount(total);
-        pm.setStatus("INIT");
-        pm.setCreatedAt(Instant.now());
-        paymentRepo.save(pm);
 
         return order;
     }

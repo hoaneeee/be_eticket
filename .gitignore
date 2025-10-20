@@ -34,3 +34,4 @@ build/
 *.gz
 /uploads/qr
 /uploads
+application.log

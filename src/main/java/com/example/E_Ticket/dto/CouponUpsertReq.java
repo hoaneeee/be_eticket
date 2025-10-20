@@ -5,7 +5,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.Instant;
 
 public record CouponUpsertReq(
-        @NotBlank String code,
+        @NotBlank
+        @Pattern(regexp = "^[A-Z0-9_-]{3,32}$", message = "Code chỉ gồm A-Z, 0-9, _ hoặc -, 3..32 ký tự")
+        String code,
+
         @NotBlank String type,                // PERCENT | AMOUNT
         @NotNull  @Positive Long value,
         Instant startAt,
@@ -16,5 +19,9 @@ public record CouponUpsertReq(
     @JsonIgnore
     public boolean isValidWindow() {
         return startAt == null || endAt == null || endAt.isAfter(startAt);
+    }
+    @JsonIgnore
+    public String normalizedCode() {
+        return code == null ? null : code.trim().toUpperCase();
     }
 }

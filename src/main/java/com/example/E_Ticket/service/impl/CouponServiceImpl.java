@@ -35,32 +35,68 @@ public class CouponServiceImpl implements CouponService {
         if ("PERCENT".equals(r.type()) && (r.value() <= 0 || r.value() > 100))
             throw new BusinessException("Percent must be 1..100");
         validateWindow(r);
-        var saved = couponRepository.save(CouponMapper.toEntity(r));
+
+        String code = r.normalizedCode();
+
+        if (couponRepository.existsByCodeIgnoreCase(code)) {
+            throw new BusinessException("Code đã tồn tại");
+        }
+
+        var saved = couponRepository.save(
+                Coupon.builder()
+                        .code(code)
+                        .type(Coupon.Type.valueOf(r.type()))
+                        .value(r.value())
+                        .startAt(r.startAt())
+                        .endAt(r.endAt())
+                        .maxUse(r.maxUse())
+                        .perUserLimit(r.perUserLimit())
+                        .used(0)
+                        .build()
+        );
         return CouponMapper.toDto(saved);
     }
 
     @Override
     public CouponDto update(Long id, CouponUpsertReq r) {
-        if ("PERCENT".equals(r.type()) && (r.value() <= 0 || r.value() > 100))
+        // validate logic cho PERCENT
+        if ("PERCENT".equals(r.type()) && (r.value() <= 0 || r.value() > 100)) {
             throw new BusinessException("Percent must be 1..100");
+        }
         validateWindow(r);
-        var c = couponRepository.findById(id).orElseThrow(() -> new NotFoundException("Coupon Not Found"));
+
+        var c = couponRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Coupon Not Found"));
+
+        String newCode = r.code() == null ? null : r.code().trim().toUpperCase();
+        if (newCode != null && !newCode.equalsIgnoreCase(c.getCode())) {
+            if (couponRepository.existsByCodeIgnoreCase(newCode)) {
+                throw new BusinessException("Code đã tồn tại");
+            }
+            c.setCode(newCode);
+        }
+
         CouponMapper.copyToExisting(c, r);
+
         return CouponMapper.toDto(couponRepository.save(c));
     }
-
     @Override
     public void delete(Long id) {
         couponRepository.deleteById(id);
     }
-
     @Override
     public CouponDto validate(String code) {
-        Coupon c = couponRepository.findByCode(code).orElseThrow(() -> new NotFoundException("Invalid coupon"));
+        if (code == null || code.isBlank()) throw new BusinessException("Code trống");
+        String normalized = code.trim().toUpperCase();
+
+        Coupon c = couponRepository.findByCodeIgnoreCase(normalized)
+                .orElseThrow(() -> new NotFoundException("Invalid coupon"));
+
         Instant now = Instant.now();
         if (c.getStartAt()!=null && now.isBefore(c.getStartAt())) throw new BusinessException("Not started");
         if (c.getEndAt()!=null && now.isAfter(c.getEndAt()))   throw new BusinessException("Expired");
         if (c.getMaxUse()!=null && c.getUsed()>=c.getMaxUse()) throw new BusinessException("Out of quota");
+
         return CouponMapper.toDto(c);
     }
 }

@@ -222,7 +222,15 @@ public class CheckoutWebController {
         }
 
         Long userId = webUtils.currentUserIdOrNull();
-        var order = checkoutService.placeOrder(cart, userId, buyerName, buyerEmail, buyerPhone);
+
+        // lấy coupon hiện có + preview để tính tổng sau giảm
+        String couponCode = cartSessionService.getCoupon(session);
+        var preview = pricingService.preview(session, new PricingPreviewReq(couponCode));
+
+        var payable = preview.total();
+
+        var order = checkoutService.placeOrder(cart, userId, buyerName, buyerEmail, buyerPhone,
+                payable);
 
         return switch (paymentMethod) {
             case "MOMO_ATM" -> "redirect:/payment/momo/atm/pay?orderCode=" + order.getCode();

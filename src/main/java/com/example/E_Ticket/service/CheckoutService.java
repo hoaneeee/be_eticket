@@ -10,4 +10,6 @@ public interface CheckoutService {
     void markPaid(String orderCode, String txnId);
     void markPaid(String orderCode, String txnId, String sessionId);
     void markFailed(String orderCode, String reason);
+    Order placeOrder(CartView cart, Long userId, String buyerName, String buyerEmail, String buyerPhone,
+                     java.math.BigDecimal finalTotal);
 }

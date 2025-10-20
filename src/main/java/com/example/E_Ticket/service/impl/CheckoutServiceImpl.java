@@ -69,6 +69,50 @@ public class CheckoutServiceImpl implements CheckoutService {
 
         return order;
     }
+    @Override
+    public Order placeOrder(CartView cart, Long userId, String buyerName, String buyerEmail, String buyerPhone,
+                            BigDecimal finalTotal) {
+        if (cart == null || cart.lines == null || cart.lines.isEmpty()) {
+            throw new BusinessException("Cart is empty");
+        }
+
+        Event orderEvent = null;
+        // vẫn validate các line & gán event giống method cũ
+        for (var line : cart.lines) {
+            var tt = ticketTypeRepo.findById(line.ticketTypeId)
+                    .orElseThrow(() -> new BusinessException("Ticket type not found"));
+            if (orderEvent == null) orderEvent = tt.getEvent();
+            else if (!orderEvent.getId().equals(tt.getEvent().getId())) {
+                throw new BusinessException("Giỏ hàng chứa vé nhiều sự kiện");
+            }
+        }
+
+        Order order = new Order();
+        order.setCode(genOrderCode());
+        if (userId != null){
+            order.setUser(userRepo.findById(userId).orElseThrow(() -> new BusinessException("User not found")));
+        }
+        order.setEvent(orderEvent);
+
+        // ✅ FIX: dùng tổng sau khi áp mã/khuyến mại
+        order.setTotal(finalTotal); // <<<<<<
+
+        order.setStatus(Order.Status.PENDING);
+        order.setCreatedAt(Instant.now());
+        order = orderRepo.save(order);
+
+        // giữ nguyên lưu các OrderItem với đơn giá gốc (tuỳ bạn muốn chi tiết giảm ở đâu)
+        for (var l : cart.lines) {
+            var tt = ticketTypeRepo.findById(l.ticketTypeId).orElseThrow();
+            OrderItem it = new OrderItem();
+            it.setOrder(order);
+            it.setTicketType(tt);
+            it.setQty(l.qty);
+            it.setPrice(unitPriceFromCartOrTicket(l, tt)); // có thể giữ nguyên
+            orderItemRepo.save(it);
+        }
+        return order;
+    }
 
     @Override
     public void markPaid(String orderCode, String txnId) {

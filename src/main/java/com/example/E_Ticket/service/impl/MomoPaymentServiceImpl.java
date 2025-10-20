@@ -150,7 +150,7 @@ public class MomoPaymentServiceImpl implements MomoPaymentService {
         return (i > 0) ? momoOrderId.substring(0, i) : momoOrderId;
     }
 
-    @Override
+  /*  @Override
     public String createAndGetPayUrl(String orderCode, String method) {
         Order o = orderRepo.findByCode(orderCode)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
@@ -207,64 +207,57 @@ public class MomoPaymentServiceImpl implements MomoPaymentService {
 
         return res.payUrl();
 
-      /*  var res = momo.createPayment(
-                o.getTotal().longValue(),
-                o.getCode(),
-                "Thanh toan don " + o.getCode(),
-                requestType
-        );
-
-        // upsert payment
-        Payment p = paymentRepo.findByOrderId(o.getId()).orElse(null);
-        if (p == null) p = new Payment();
-        p.setOrder(o);
-        p.setProvider("MOMO");
-        p.setAmount(o.getTotal());
-        p.setStatus(res.resultCode() == 0 ? "PENDING" : "FAILED");
-        p.setTxnRef(res.requestId());
-        paymentRepo.save(p);
-
-        if (res.resultCode() != 0 || res.payUrl() == null) {
-            throw new IllegalStateException("Create MoMo failed: " + res.message());
-        }
-        return res.payUrl();*/
-    }
-
-   /* @Override
-    public Order markPaid(String momoOrderId, String transId, String requestId, String sessionId) {
-        Order order = orderRepo.findByCode(momoOrderId).orElseThrow();
-        Payment p = paymentRepo.findByOrderId(order.getId())
-                .orElseThrow(() -> new NotFoundException("Payment not found"));
-
-        if ("SUCCESS".equalsIgnoreCase(p.getStatus())) return order;
-
-        p.setStatus("SUCCESS");
-        p.setTxnRef(transId);
-        paymentRepo.save(p);
-
-        order.setStatus(Order.Status.PAID);
-        order.setPaymentMethod("MOMO");
-
-        if (order.getQrImagePath() == null) {
-            String qrData = """
-                 {"orderId":"%s","status":"%s","total":%s}
-            """.formatted(order.getCode(), order.getStatus(), order.getTotal());
-            String path = qrService.createPng(qrData, order.getCode(), 400);
-            order.setQrImagePath("/" + path);
-        }
-        orderRepo.save(order);
-
-        if (sessionId != null) {
-            seatSoldService.commitSeatsForOrder(order, sessionId);
-        }
-
-        inventoryService.consumeAllActiveBySessionAndEvent(sessionId, order.getEvent().getId());
-
-        ticketService.issueTickets(order);
-        // mailService.send(...)
-
-        return order;
     }*/
+  @Override
+  public String createAndGetPayUrl(String orderCode, String method, String sessionId) { // FIX
+      Order o = orderRepo.findByCode(orderCode).orElseThrow(() -> new NotFoundException("Order not found"));
+      if (o.getStatus() == Order.Status.PAID) throw new IllegalStateException("Order already PAID");
+
+      String requestType = switch (method) {
+          case "MOMO_ATM" -> "payWithATM";
+          case "MOMO_WALLET" -> "captureWallet";
+          default -> "captureWallet";
+      };
+
+      Payment p = paymentRepo.findByOrderId(o.getId()).orElse(null);
+      if (p == null) {
+          p = new Payment();
+          p.setOrder(o);
+          p.setProvider("MOMO");
+          p.setAmount(o.getTotal());
+          p.setStatus("PENDING");
+          p.setAttempt(0);
+      } else {
+          if ("PENDING".equalsIgnoreCase(p.getStatus())
+                  && p.getPayUrl()!=null && !p.getPayUrl().isBlank()) {
+              // FIX: cập nhật sessionId nếu có (chẳng hạn user tạo lại)
+              if (sessionId!=null) p.setHoldSessionId(sessionId);
+              paymentRepo.save(p);
+              return p.getPayUrl();
+          }
+      }
+
+      int nextAttempt = (p.getAttempt()==null?0:p.getAttempt()) + 1;
+      String momoOrderId = o.getCode() + "-" + nextAttempt;
+
+      var res = momo.createPayment(o.getTotal().longValue(), momoOrderId,
+              "Thanh toan don " + o.getCode(), requestType);
+      if (res.resultCode()!=0 || res.payUrl()==null)
+          throw new IllegalStateException("Create MoMo failed: " + res.message());
+
+      p.setAttempt(nextAttempt);
+      p.setTxnRef(res.requestId());
+      p.setRequestId(res.requestId());
+      p.setMomoOrderId(momoOrderId);
+      p.setPayUrl(res.payUrl());
+      p.setAmount(o.getTotal());
+      p.setStatus("PENDING");
+      p.setHoldSessionId(sessionId); // FIX: LƯU sessionId GIỮ GHẾ
+      paymentRepo.save(p);
+
+      return res.payUrl();
+  }
+
    @Override
    public Order markPaid(String momoOrderId, String transId, String requestId, String sessionId) {
 
@@ -294,11 +287,12 @@ public class MomoPaymentServiceImpl implements MomoPaymentService {
        }
        orderRepo.save(order);
 
-       if (sessionId != null) {
-           seatSoldService.commitSeatsForOrder(order, sessionId);
-       }
+       String sid = (sessionId!=null && !sessionId.isBlank()) ? sessionId : p.getHoldSessionId();
 
-       inventoryService.consumeAllActiveBySessionAndEvent(sessionId, order.getEvent().getId());
+       if (sid != null) {
+           try { seatSoldService.commitSeatsForOrder(order, sid); } catch (Exception ignored) {}
+           try { inventoryService.consumeAllActiveBySessionAndEvent(sid, order.getEvent().getId()); } catch (Exception ignored) {}
+       }
 
        ticketService.issueTickets(order);
 

@@ -281,7 +281,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr th:each="it : ${order.items}">
+                    <tr th:each="it : ${items}">
                         <td th:text="${it.ticketType != null ? it.ticketType.name : it.displayName}">Vé</td>
                         <td class="text-center" th:text="${it.qty}">1</td>
                         <td class="text-end" th:text="${#numbers.formatInteger(it.price,0)}">0</td>

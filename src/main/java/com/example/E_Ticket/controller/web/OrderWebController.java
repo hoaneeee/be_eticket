@@ -133,7 +133,7 @@ public class OrderWebController {
         return "orders/list";
     }
 
-    @PreAuthorize("isAuthenticated()")
+  /*  @PreAuthorize("isAuthenticated()")
     @GetMapping("/{code}")
     public String detail(@PathVariable String code, Authentication auth, Model model,
                          HttpSession session) {
@@ -154,7 +154,45 @@ public class OrderWebController {
         }
 
         return "orders/detail";
-    }
+    }*/
+  @PreAuthorize("isAuthenticated()")
+  @GetMapping("/{code}")
+  public String detail(@PathVariable String code,
+                       Authentication auth,
+                       Model model,
+                       HttpSession session) {
+
+      var user = userRepo.findByEmail(auth.getName()).orElseThrow();
+
+      // Lấy đơn hàng đã FETCH JOIN items
+      Order o = orderRepo.findByCodeAndUserIdWithItems(code, user.getId())
+              .orElseThrow(() -> new NotFoundException("Order not found"));
+
+      // ----- Model cho view -----
+      model.addAttribute("order", o);
+      model.addAttribute("items", o.getItems()); // <<< QUAN TRỌNG: cho Thymeleaf lặp trên biến này
+
+      // Refunds
+      var refunds = refundRepo.findByOrder_Id(o.getId());
+      model.addAttribute("refunds", refunds);
+      boolean refundable = policy.isRefundable(o) && refunds.isEmpty();
+      model.addAttribute("refundable", refundable);
+
+      // Tickets (nếu bạn hiển thị)
+      model.addAttribute("tickets", ticketRepo.findByOrder_Id(o.getId()));
+
+      // Payment gần nhất (template của bạn có block hiển thị payment)
+      paymentRepo.findTopByOrderIdOrderByIdDesc(o.getId())
+              .ifPresent(p -> model.addAttribute("payment", p));
+
+      // Clear giỏ cho event sau khi đã trả tiền
+      if (o.getStatus() == Order.Status.PAID && o.getEvent() != null) {
+          cartSessionService.clearByEvent(session, o.getEvent().getId());
+      }
+
+      return "orders/detail";
+  }
+
 
     private String createQRCodeData(Order order) {
         JSONObject json = new JSONObject();

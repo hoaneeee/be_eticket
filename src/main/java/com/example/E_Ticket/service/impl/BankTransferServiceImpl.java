@@ -28,6 +28,8 @@ public class BankTransferServiceImpl implements BankTransferService {
     private final TicketService ticketService;
     private final QrService qrService;
     private final MailService mailService;
+    private final InventoryService inventoryService;
+    private final SeatSoldService seatSoldService;
 
     @Value("${app.web.base-url:http://localhost:8080}")
     private String appBaseUrl;
@@ -37,7 +39,7 @@ public class BankTransferServiceImpl implements BankTransferService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
-    public String initiatePayment(String orderCode) {
+    public String initiatePayment(String orderCode, String sessionId) { // FIX
         Order order = orderRepository.findByCode(orderCode)
                 .orElseThrow(() -> new NotFoundException("Order not found: " + orderCode));
 
@@ -47,6 +49,7 @@ public class BankTransferServiceImpl implements BankTransferService {
                 .amount(order.getTotal())
                 .status("INIT")
                 .attempt(0)
+                .holdSessionId(sessionId) // FIX: LƯU session giữ ghế
                 .build();
         paymentRepository.save(payment);
 
@@ -55,6 +58,7 @@ public class BankTransferServiceImpl implements BankTransferService {
 
         return "/payment/bank-transfer/qr?orderCode=" + orderCode;
     }
+
 
     @Override
     public boolean handleWebhook(BankTransferWebhookDto webhook) {
@@ -124,6 +128,12 @@ public class BankTransferServiceImpl implements BankTransferService {
         orderRepository.save(order);
 
         var tickets = ticketService.issueTickets(order);
+
+        String sid = (payment!=null)? payment.getHoldSessionId() : null; // FIX
+        if (sid != null) {
+            try { seatSoldService.commitSeatsForOrder(order, sid); } catch (Exception ignored) {}
+            try { inventoryService.consumeAllActiveBySessionAndEvent(sid, order.getEvent().getId()); } catch (Exception ignored) {}
+        }
 
         try {
             if (order.getUser() != null && order.getUser().getEmail() != null) {

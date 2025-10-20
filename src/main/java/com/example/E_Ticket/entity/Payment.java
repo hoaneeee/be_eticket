@@ -69,4 +69,5 @@ public class Payment {
     String momoMessage;
     @Column(nullable = false)
     private Integer attempt = 0;
-}
+    @Column(length = 64)
+    private String holdSessionId;  }

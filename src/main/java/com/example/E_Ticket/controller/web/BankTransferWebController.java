@@ -6,6 +6,7 @@ import com.example.E_Ticket.entity.Payment;
 import com.example.E_Ticket.repository.PaymentRepository;
 import com.example.E_Ticket.service.BankTransferService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -27,10 +28,11 @@ public class BankTransferWebController {
 
     @GetMapping("/payment/bank-transfer/pay")
     @PreAuthorize("isAuthenticated()")
-    public String paymentPage(@RequestParam String orderCode, Model model) {
+    public String paymentPage(@RequestParam String orderCode, Model model, HttpSession session) {
         log.info("Bank transfer payment page requested for order: {}", orderCode);
 
-        String qrUrl = bankTransferService.initiatePayment(orderCode);
+        String qrUrl = bankTransferService.initiatePayment(orderCode,
+                session!=null? session.getId() : null);
         
         Order order = bankTransferService.getOrderByCode(orderCode);
 
@@ -55,8 +57,8 @@ public class BankTransferWebController {
 
     @GetMapping("/payment/bank-transfer/qr")
     @PreAuthorize("isAuthenticated()")
-    public String qrPage(@RequestParam String orderCode, Model model) {
-        return paymentPage(orderCode, model);
+    public String qrPage(@RequestParam String orderCode, Model model, HttpSession session) {
+        return paymentPage(orderCode, model,session);
     }
 
 

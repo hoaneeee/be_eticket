@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -26,4 +27,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findByCode(String code);
     Optional<Order> findByCodeAndUser_Id(String code, Long userId);
     List<Order> findAllByUser_IdOrderByCreatedAtDesc(Long userId);
+    @Query("""
+  select distinct o
+  from Order o
+  left join fetch o.items i
+  left join fetch i.ticketType tt
+  left join fetch o.event e
+  where o.code = :code and o.user.id = :userId
+""")
+    Optional<Order> findByCodeAndUserIdWithItems(@Param("code") String code, @Param("userId") Long userId);
 }

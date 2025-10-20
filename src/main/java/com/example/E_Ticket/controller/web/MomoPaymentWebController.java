@@ -121,15 +121,17 @@ public class MomoPaymentWebController {
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/pay")
-    public String pay(@RequestParam("orderCode") String orderCode) {
-        String payUrl = momoService.createAndGetPayUrl(orderCode, "MOMO_WALLET");
+    public String pay(@RequestParam("orderCode") String orderCode, HttpSession session) { // FIX
+        String payUrl = momoService.createAndGetPayUrl(orderCode, "MOMO_WALLET",
+                session!=null? session.getId() : null); // FIX
         return "redirect:" + payUrl;
     }
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/atm/pay")
-    public String payAtm(@RequestParam("orderCode") String orderCode) {
-        String payUrl = momoService.createAndGetPayUrl(orderCode, "MOMO_ATM");
+    public String payAtm(@RequestParam("orderCode") String orderCode, HttpSession session) { // FIX
+        String payUrl = momoService.createAndGetPayUrl(orderCode, "MOMO_ATM",
+                session!=null? session.getId() : null); // FIX
         return "redirect:" + payUrl;
     }
 
